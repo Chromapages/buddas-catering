@@ -1,0 +1,70 @@
+/* react-big-calendar-custom.css */
+
+.rbc-calendar {
+  font-family: var(--font-body);
+}
+
+.rbc-event {
+  background-color: var(--color-teal-base) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+
+.rbc-month-view {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border-color: var(--color-gray-border) !important;
+}
+
+.rbc-header {
+  border-bottom-color: var(--color-gray-border) !important;
+  padding: 12px 0 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.05em !important;
+  color: var(--color-brown) !important;
+  opacity: 0.6;
+}
+
+.rbc-off-range-bg {
+  background-color: var(--color-gray-bg) !important;
+  opacity: 0.5;
+}
+
+.rbc-today {
+  background-color: var(--color-cream) !important;
+}
+
+/* Custom class handling based on status */
+.rbc-event.calendar-event-pending {
+  background-color: var(--color-orange) !important;
+}
+
+.rbc-event.calendar-event-completed {
+  background-color: var(--color-teal-dark) !important;
+}
+
+.rbc-toolbar-label {
+  font-family: var(--font-heading) !important;
+  font-weight: 700 !important;
+  color: var(--color-teal-dark) !important;
+  text-transform: capitalize !important;
+}
+
+.rbc-btn-group button {
+  color: var(--color-brown) !important;
+  border-color: var(--color-gray-border) !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+}
+
+.rbc-btn-group button.rbc-active {
+  background-color: var(--color-teal-base) !important;
+  color: white !important;
+  border-color: var(--color-teal-base) !important;
+}

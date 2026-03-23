@@ -1,0 +1,105 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Auth Helpers
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return isAuthenticated() && (request.auth.token.role == 'owner' || request.auth.token.role == 'admin');
+    }
+
+    function isRep() {
+      return isAuthenticated() && request.auth.token.role == 'rep';
+    }
+
+    function isMarketing() {
+      return isAuthenticated() && request.auth.token.role == 'marketing';
+    }
+
+    function isOps() {
+      return isAuthenticated() && request.auth.token.role == 'ops';
+    }
+
+    // Role-Based Rules
+    
+    // Companies
+    match /companies/{companyId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner() || isMarketing() || isOps();
+      allow delete: if isOwner();
+    }
+
+    // Contacts
+    match /contacts/{contactId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner() || isMarketing() || isOps() || isRep();
+      allow delete: if isOwner();
+    }
+
+    // Leads
+    match /leads/{leadId} {
+      allow read: if isOwner() || isMarketing() || isOps() || 
+                   (isRep() && resource.data.assignedRepId == request.auth.uid);
+      allow create: if isOwner() || isMarketing() || isOps(); // System API creates leads
+      allow update: if isOwner() || isMarketing() || isOps() || 
+                    (isRep() && resource.data.assignedRepId == request.auth.uid);
+      allow delete: if isOwner();
+    }
+
+    // Catering Requests
+    match /cateringRequests/{requestId} {
+      allow read: if isOwner() || isMarketing() || isOps() || 
+                   (isRep() && resource.data.assignedRepId == request.auth.uid);
+      allow create, update: if isOwner() || isMarketing() || isOps() || 
+                           (isRep() && resource.data.assignedRepId == request.auth.uid);
+      allow delete: if isOwner();
+    }
+
+    // Memberships
+    match /memberships/{membershipId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner() || isOps();
+      allow delete: if isOwner();
+    }
+
+    // Activities (Append Only)
+    match /activities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable log
+    }
+
+    // Commission Approvals
+    match /commission_approvals/{approvalId} {
+      allow read: if isOwner() || isOps() || 
+                  (isRep() && resource.data.repId == request.auth.uid);
+      allow create: if isOps() || isOwner(); // Usually created by system/ops
+      // Rule: Immutability once approved=true
+      allow update: if isOwner() && resource.data.approved == false;
+      allow delete: if isOwner() && resource.data.approved == false;
+    }
+
+    // Notifications (Per-user private)
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner() || request.auth.uid == userId; // Users can update own profile
+    }
+  }
+}
