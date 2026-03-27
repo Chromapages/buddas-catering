@@ -26,6 +26,7 @@ import { Lead, LeadStatus } from "@/types/crm";
 import { updateLeadStatus } from "@/lib/firebase/services/crm";
 import { useAuth } from "@/lib/firebase/context/auth";
 import toast from "react-hot-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface KanbanBoardProps {
   initialLeads: Lead[];
@@ -40,6 +41,7 @@ const COLUMNS: { id: LeadStatus; title: string }[] = [
 
 export const KanbanBoard = ({ initialLeads }: KanbanBoardProps) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
 
@@ -57,6 +59,39 @@ export const KanbanBoard = ({ initialLeads }: KanbanBoardProps) => {
   useEffect(() => {
     setLeads(initialLeads);
   }, [initialLeads]);
+
+  const mutation = useMutation({
+    mutationFn: ({ id, newStatus, currentStatus }: { id: string, newStatus: LeadStatus, currentStatus: LeadStatus }) => 
+      updateLeadStatus(id, newStatus as any, currentStatus, user?.uid || "system", user?.displayName || "System"),
+    onMutate: async ({ id, newStatus }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['leads', user?.uid] });
+
+      // Snapshot the previous value
+      const previousLeads = queryClient.getQueryData<Lead[]>(['leads', user?.uid]);
+
+      // Optimistically update to the new value
+      if (previousLeads) {
+        queryClient.setQueryData(['leads', user?.uid], 
+          previousLeads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead)
+        );
+      }
+
+      return { previousLeads };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousLeads) {
+        queryClient.setQueryData(['leads', user?.uid], context.previousLeads);
+      }
+      toast.error("Failed to update lead status");
+    },
+    onSuccess: (data, variables) => {
+      toast.success(`Moved to ${variables.newStatus}`);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads', user?.uid] });
+    },
+  });
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -76,8 +111,6 @@ export const KanbanBoard = ({ initialLeads }: KanbanBoardProps) => {
     const isActiveALead = active.data.current?.type === "Lead";
     if (!isActiveALead) return;
 
-    // Handle moving lead to a different column
-    // Dnd-kit logic for sortable across containers
     setLeads((prevLeads) => {
       const activeIndex = prevLeads.findIndex((l) => l.id === activeId);
       const isOverAColumn = COLUMNS.some(col => col.id === overId);
@@ -86,13 +119,11 @@ export const KanbanBoard = ({ initialLeads }: KanbanBoardProps) => {
       const lead = { ...newLeads[activeIndex] };
 
       if (isOverAColumn) {
-        // Dropped on a column header or empty area
         lead.status = overId as LeadStatus;
         newLeads[activeIndex] = lead;
         return newLeads;
       }
 
-      // Dropped over another lead
       const overIndex = prevLeads.findIndex((l) => l.id === overId);
       if (overIndex !== -1) {
         const overLead = prevLeads[overIndex];
@@ -107,7 +138,7 @@ export const KanbanBoard = ({ initialLeads }: KanbanBoardProps) => {
     });
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveLead(null);
 
@@ -118,21 +149,11 @@ export const KanbanBoard = ({ initialLeads }: KanbanBoardProps) => {
 
     const originalLead = initialLeads.find(l => l.id === lead.id);
     if (originalLead && originalLead.status !== lead.status) {
-      // Status changed, persist to Firebase
-      try {
-        await updateLeadStatus(
-          lead.id,
-          lead.status as any,
-          originalLead.status,
-          user?.uid || "system",
-          user?.displayName || "System"
-        );
-        toast.success(`Moved to ${lead.status}`);
-      } catch (error) {
-        toast.error("Failed to update status");
-        // Revert local state if error
-        setLeads(initialLeads);
-      }
+      mutation.mutate({ 
+        id: lead.id, 
+        newStatus: lead.status as LeadStatus, 
+        currentStatus: originalLead.status as LeadStatus 
+      });
     }
   };
 

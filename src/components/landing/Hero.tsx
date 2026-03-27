@@ -1,79 +1,104 @@
+"use client";
+
 import Image from "next/image";
 import { Button } from "@/components/shared/Button";
 import Link from "next/link";
 import { Badge } from "@/components/shared/Badge";
+import { motion } from "framer-motion";
+import { CheckCircle2, Star } from "lucide-react";
 
 export function Hero() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as any },
+    },
+  };
+
   return (
-    <section className="relative overflow-hidden bg-cream pt-16 md:pt-24 lg:pt-32 pb-16">
-      <div className="container mx-auto max-w-7xl px-4 md:px-6 relative z-10">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-8 items-center">
-          
-          <div className="flex flex-col justify-center space-y-8 text-center lg:text-left">
-            <div className="space-y-4">
-              <div className="inline-flex items-center justify-center lg:justify-start">
-                <Badge variant="warning" className="uppercase tracking-wider">Now serving Utah County</Badge>
-              </div>
-              <h1 className="text-4xl font-bold tracking-tight text-teal-dark sm:text-5xl xl:text-6xl font-heading leading-tight">
-                Premium Hawaiian Catering for Your Office
-              </h1>
-              <p className="max-w-[600px] text-lg text-brown/80 md:text-xl leading-relaxed mx-auto lg:mx-0">
-                From breakfast meetings to all-hands lunches. Zero stress, reliable delivery, and food your team actually wants to eat.
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button size="lg" asChild className="w-full sm:w-auto shadow-md">
-                <Link href="#book">Book Catering</Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
-                <Link href="#memberships">View Memberships</Link>
-              </Button>
-            </div>
-            <div className="flex items-center justify-center lg:justify-start gap-2 text-sm font-medium text-brown/60">
-              <span className="flex h-2 w-2 rounded-full bg-teal-base animate-pulse"></span>
-              Starting at just $12 / person
-            </div>
-            
-            <div className="pt-4 flex items-center justify-center lg:justify-start gap-4 text-sm text-brown/70 font-medium">
-              <div className="flex items-center gap-1">
-                <svg className="w-5 h-5 text-teal-base" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                <span>Setup Included</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <svg className="w-5 h-5 text-teal-base" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                <span>On-time Delivery</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="relative mx-auto w-full max-w-[500px] lg:max-w-none aspect-[4/3] lg:aspect-square">
-            <div className="absolute inset-0 rounded-3xl bg-teal-base/10 shadow-2xl transform rotate-3 scale-105 transition-transform duration-700 ease-in-out hover:rotate-6"></div>
-            <div className="absolute inset-0 rounded-3xl overflow-hidden border-8 border-white shadow-xl">
-              <Image
-                src="https://images.unsplash.com/photo-1555244162-803834f70033?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-                alt="Delicious Hawaiian catering spread"
-                fill
-                priority
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            </div>
-            
-            {/* Quick floating stat card */}
-            <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg p-4 flex items-center gap-4 animate-bounce" style={{ animationDuration: '3s' }}>
-              <div className="bg-green-100 p-3 rounded-full text-green-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-teal-dark font-heading">100+ Offices</p>
-                <p className="text-xs text-brown/70">Fed in Utah</p>
-              </div>
-            </div>
-          </div>
-          
-        </div>
+    <section className="relative min-h-[90dvh] flex items-center overflow-hidden">
+      {/* Full-Bleed Background Image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="https://images.unsplash.com/photo-1555244162-803834f70033?w=2400&auto=format&fit=crop&q=80"
+          alt="Premium Hawaiian Catering Spread"
+          fill
+          priority
+          className="object-cover"
+        />
+        {/* Advanced Overlay: Darker on bottom-left for text visibility, transparent on top-right for food */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-brown/80 via-brown/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-teal-dark/10 mix-blend-multiply"></div>
       </div>
+
+      <div className="container-rig relative z-10 pt-20">
+        <motion.div 
+          className="max-w-2xl bg-white/5 backdrop-blur-md border border-white/20 p-8 md:p-12 rounded-[2.5rem] shadow-2xl"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="space-y-6">
+            <motion.div variants={itemVariants} className="inline-flex items-center">
+              <Badge variant="warning" className="bg-orange/90 text-white border-0 py-1.5 px-4 tracking-widest flex gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                Now serving Utah County
+              </Badge>
+            </motion.div>
+            
+            <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white font-heading leading-tight md:leading-[1.1]">
+              The Lunch Your Office Will<br />
+              <span className="text-teal-base">Actually</span> Love.
+            </motion.h1>
+
+            <motion.div variants={itemVariants} className="flex items-center gap-2 py-1">
+              <div className="flex text-orange">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-current" />)}
+              </div>
+              <span className="text-lg font-bold text-white/90 ml-2">4.9 · 100+ Utah County Companies</span>
+            </motion.div>
+
+            <motion.p variants={itemVariants} className="text-lg md:text-xl text-white/90 leading-relaxed font-medium">
+              Premium Hawaiian catering for Utah's office managers and EAs. We show up early, handle every detail, and leave your team impressed.
+            </motion.p>
+            
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Button size="lg" asChild className="w-full sm:w-auto h-14 px-10 text-lg shadow-xl shadow-teal-dark/20">
+                <Link href="#book">Start My Quote</Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild className="w-full sm:w-auto h-14 px-10 text-lg bg-white/10 text-white border-white/30 hover:bg-white/20 hover:text-white backdrop-blur-sm">
+                <Link href="#menu">View Full Menu</Link>
+              </Button>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-3 text-white/90 font-bold">
+                <CheckCircle2 className="w-6 h-6 text-teal-base" />
+                <span>Same-Day Quotes</span>
+              </div>
+              <div className="flex items-center gap-3 text-white/90 font-bold">
+                <CheckCircle2 className="w-6 h-6 text-teal-base" />
+                <span>15-Min Early Guarantee</span>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+      </div>
+
+
     </section>
   );
 }

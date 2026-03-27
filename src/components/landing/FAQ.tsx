@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import Link from "next/link";
 
-const faqs = [
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+const faqs: FAQItem[] = [
   {
     question: "How far in advance do I need to order?",
     answer: "We prefer 48 hours notice to guarantee your preferred delivery time and exact menu choices. However, for last-minute emergencies, please call us directly — we can almost always accommodate next-day orders for standard menus."
@@ -30,14 +36,14 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0); // First one open by default
 
   return (
-    <section id="faq" className="bg-gray-bg py-24">
+    <section id="faq" className="bg-cream py-24">
       <div className="container mx-auto max-w-3xl px-4 md:px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold font-heading text-teal-dark mb-4 drop-shadow-sm">
-            Frequently Asked Questions
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold font-heading text-teal-dark mb-4">
+            Common Questions
           </h2>
-          <p className="text-lg text-brown/80">
-            Everything you need to know about our catering service.
+          <p className="text-lg text-brown/80 max-w-2xl mx-auto">
+            Everything you need to know about island-inspired catering for your team.
           </p>
         </div>
 
@@ -72,6 +78,13 @@ export function FAQ() {
               </div>
             );
           })}
+        </div>
+
+        <div className="mt-16 text-center">
+          <p className="text-brown/60 mb-2">Still have questions?</p>
+          <Link href="#book" className="text-teal-base font-bold hover:underline">
+            Chat with a catering specialist →
+          </Link>
         </div>
       </div>
     </section>

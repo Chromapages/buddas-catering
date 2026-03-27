@@ -1,38 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { KanbanBoard } from "@/components/crm/kanban/KanbanBoard";
 import { getAllLeads } from "@/lib/firebase/services/crm";
 import { useAuth } from "@/lib/firebase/context/auth";
-import { Lead } from "@/types/crm";
 import { Button } from "@/components/shared/Button";
 import Link from "next/link";
 import { LayoutGrid, List } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function LeadsBoard() {
   const { user, role } = useAuth();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user || !role) return;
-
-    const fetchLeads = async () => {
-      try {
-        const data = await getAllLeads(user.uid, role);
-        setLeads(data);
-      } catch (error) {
-        console.error("Error fetching leads for board:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeads();
-  }, [user, role]);
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ['leads', user?.uid],
+    queryFn: () => getAllLeads(user!.uid, role!),
+    enabled: !!user && !!role,
+  });
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 h-full flex flex-col">
+    <div className="p-6 lg:p-8 space-y-8 h-full flex flex-col animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold font-heading text-teal-dark underline-teal">Pipeline Board</h1>
@@ -60,7 +46,7 @@ export default function LeadsBoard() {
       </div>
 
       <div className="flex-1 min-h-0">
-        {loading ? (
+        {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-base"></div>
           </div>

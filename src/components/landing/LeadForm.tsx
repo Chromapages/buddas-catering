@@ -9,9 +9,12 @@ import { Select } from "@/components/shared/Select";
 import { Button } from "@/components/shared/Button";
 import { SuccessState } from "@/components/landing/SuccessState";
 import { useSearchParams } from "next/navigation";
-import { Check, ArrowRight, ArrowLeft, Quote } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Quote, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
+import { Calendar } from "@/components/ui/Calendar";
+import { format } from "date-fns";
 
 export function LeadForm() {
   const searchParams = useSearchParams();
@@ -19,6 +22,7 @@ export function LeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   const defaultNeed = searchParams.get("need");
   const preferredNeed = ["Breakfast", "Lunch", "Pastries"].includes(defaultNeed as string) ? defaultNeed : "Not Sure Yet";
@@ -28,6 +32,7 @@ export function LeadForm() {
     handleSubmit,
     trigger,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<IntakeFormData>({
     // @ts-expect-error zodResolver type mismatch
@@ -81,7 +86,7 @@ export function LeadForm() {
 
   if (isSuccess) {
     return (
-      <section id="book" className="bg-white py-24 border-t border-gray-border">
+      <section id="book" className="bg-cream py-24 border-t border-gray-border">
         <div className="container mx-auto max-w-3xl px-4 md:px-6">
           <SuccessState onReset={() => { setIsSuccess(false); setStep(1); }} />
         </div>
@@ -90,18 +95,18 @@ export function LeadForm() {
   }
 
   return (
-    <section id="book" className="bg-white py-24 border-t border-gray-border overflow-hidden">
-      <div className="container mx-auto max-w-6xl px-4 md:px-6">
+    <section id="book" className="bg-cream py-24 border-t border-gray-border overflow-hidden">
+      <div className="container-rig">
         <div className="flex flex-col lg:flex-row gap-12 items-start">
           
           {/* Left Side: Context & Trust */}
           <div className="w-full lg:w-1/3 space-y-8">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold font-heading text-teal-dark mb-4 text-center lg:text-left">
-                Request a Quote
+                Get Your Custom Quote in 2 Hours.
               </h2>
               <p className="text-lg text-brown/80 text-center lg:text-left">
-                Tell us about your event. We&apos;ll get back to you within 2 hours with a firm menu and pricing.
+                Tell us about your event — group size, date, dietary needs. We respond within 2 hours with a custom quote. No commitment required.
               </p>
             </div>
 
@@ -124,18 +129,17 @@ export function LeadForm() {
             <div className="space-y-4 pt-4 hidden lg:block">
                <div className="flex items-center gap-3 text-sm text-brown/70">
                  <div className="h-2 w-2 rounded-full bg-teal-base"></div>
-                 <span>No commitment required today</span>
+                 <span>No deposit, no commitment</span>
                </div>
                <div className="flex items-center gap-3 text-sm text-brown/70">
                  <div className="h-2 w-2 rounded-full bg-teal-base"></div>
-                 <span>Custom menus for dietary needs</span>
+                 <span>Dietary needs? We've got you covered.</span>
                </div>
             </div>
           </div>
 
-          {/* Right Side: Step Form */}
           <div className="w-full lg:w-2/3">
-            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border border-gray-border relative">
+            <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-3xl shadow-xl border border-gray-border relative">
               
               {/* Step Progress Bar */}
               <div className="flex items-center justify-between mb-10 px-2">
@@ -146,9 +150,9 @@ export function LeadForm() {
                   )}>
                     {step > 1 ? <Check className="h-5 w-5" /> : "1"}
                   </div>
-                  <span className={cn("text-xs font-bold uppercase tracking-wider", step >= 1 ? "text-teal-dark" : "text-brown/40")}>Event info</span>
+                  <span className={cn("text-[10px] md:text-xs font-bold uppercase tracking-wider", step >= 1 ? "text-teal-dark" : "text-brown/40")}>Event info</span>
                 </div>
-                <div className={cn("h-px flex-1 mx-4 transition-colors", step > 1 ? "bg-teal-dark" : "bg-gray-border")}></div>
+                <div className={cn("h-px flex-1 mx-2 md:mx-4 transition-colors", step > 1 ? "bg-teal-dark" : "bg-gray-border")}></div>
                 <div className="flex flex-col items-center gap-2">
                   <div className={cn(
                     "h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
@@ -156,7 +160,7 @@ export function LeadForm() {
                   )}>
                     2
                   </div>
-                  <span className={cn("text-xs font-bold uppercase tracking-wider", step === 2 ? "text-teal-dark" : "text-brown/40")}>Contact Details</span>
+                  <span className={cn("text-[10px] md:text-xs font-bold uppercase tracking-wider", step === 2 ? "text-teal-dark" : "text-brown/40")}>Contact Details</span>
                 </div>
               </div>
 
@@ -215,11 +219,36 @@ export function LeadForm() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-teal-dark uppercase tracking-tight">Preferred Date <span className="text-brown/50 font-normal normal-case italic">(Optional)</span></label>
-                        <Input 
-                          {...register("preferredDate")} 
-                          type="date" 
-                          error={errors.preferredDate?.message} 
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal border-gray-border h-11",
+                                !date && "text-brown/50"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {date ? format(date, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={date}
+                              onSelect={(newDate) => {
+                                setDate(newDate);
+                                setValue("preferredDate", newDate ? format(newDate, "yyyy-MM-dd") : "");
+                              }}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        {errors.preferredDate?.message && (
+                          <p className="text-xs font-medium text-orange mt-1">{errors.preferredDate.message}</p>
+                        )}
+                        <input type="hidden" {...register("preferredDate")} />
                       </div>
                     </div>
 
@@ -298,10 +327,12 @@ export function LeadForm() {
                         className="flex-[2] transition-all" 
                         disabled={isSubmitting}
                       >
-                        {isSubmitting ? "Sending..." : "Get My Quote"}
+                        {isSubmitting ? "Sending..." : "Get My Free Quote"}
                       </Button>
                     </div>
-                    <p className="text-xs text-center text-brown/60">Final step: No credit card required. We respond in &lt; 2 hours.</p>
+                    <p className="text-xs text-center text-brown/60 mt-4">
+                      No commitment required. We reply within 2 business hours.
+                    </p>
                   </div>
                 )}
 

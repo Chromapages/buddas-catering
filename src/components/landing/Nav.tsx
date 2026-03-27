@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/shared/Button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Flower2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export function Nav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,17 +12,19 @@ export function Nav() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const navLinks = [
+    { name: "How It Works", href: "#how-it-works" },
     { name: "Catering Menu", href: "#menu" },
     { name: "Memberships", href: "#memberships" },
     { name: "FAQ", href: "#faq" },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gray-border bg-gray-bg/80 backdrop-blur-md">
-      <div className="container mx-auto max-w-7xl px-4 md:px-6">
-        <div className="flex h-16 items-center justify-between">
+    <nav className="sticky top-0 z-50 w-full bg-cream/80 backdrop-blur-md border-b border-gray-border py-3 shadow-sm transition-all duration-300">
+      <div className="container-rig">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-2 group">
+              <Flower2 className="h-6 w-6 text-teal-base transition-transform group-hover:rotate-12" />
               <span className="font-heading text-xl font-bold tracking-tight text-teal-dark">
                 Buddas <span className="font-medium text-brown">Catering</span>
               </span>
@@ -42,8 +45,8 @@ export function Nav() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button asChild>
-              <Link href="#book">Book Catering</Link>
+            <Button asChild className="shadow-sm">
+              <Link href="#book">Start My Quote</Link>
             </Button>
             
             {/* Mobile Menu Toggle */}
@@ -59,25 +62,34 @@ export function Nav() {
       </div>
 
       {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden border-t border-gray-border bg-white p-4 space-y-4 animate-in slide-in-from-top duration-300">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.name} 
-              href={link.href} 
-              className="block text-base font-medium text-brown hover:text-teal-dark py-2"
-              onClick={() => setIsOpen(false)}
-            >
-              {link.name}
-            </Link>
-          ))}
-          <div className="pt-4 border-t border-gray-border flex flex-col gap-3">
-             <Button asChild className="w-full justify-center">
-               <Link href="#book">Book Catering</Link>
-             </Button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-t border-gray-border bg-cream overflow-hidden"
+          >
+            <div className="p-4 space-y-4">
+              {navLinks.map((link) => (
+                <Link 
+                  key={link.name} 
+                  href={link.href} 
+                  className="block text-base font-medium text-brown hover:text-teal-dark py-2"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {link.name}
+                </Link>
+              ))}
+              <div className="pt-4 border-t border-gray-border flex flex-col gap-3">
+                 <Button asChild className="w-full justify-center">
+                   <Link href="#book" onClick={() => setIsOpen(false)}>Start My Quote</Link>
+                 </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
