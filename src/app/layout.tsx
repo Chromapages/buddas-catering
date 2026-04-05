@@ -1,25 +1,66 @@
 import type { Metadata } from "next";
-import { Poppins, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/firebase/context/auth";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Toaster } from "react-hot-toast";
 
-const poppins = Poppins({
-  weight: ["500", "600"], // PRD explicitly says never bold (700)
-  variable: "--font-poppins",
-  subsets: ["latin"],
-});
-
-const dmSans = DM_Sans({
-  weight: ["400", "500"],
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-});
+const SITE_URL = "https://buddascatering.com";
+const OG_IMAGE = `${SITE_URL}/images/occasions/staff-lunch.png`;
 
 export const metadata: Metadata = {
-  title: "Buddas Catering | Premium Hawaiian Corporate Catering in Utah",
-  description: "From breakfast meetings to all-hands lunches. Zero stress, reliable delivery, and food your team actually wants to eat. Servicing Utah County.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Buddas Catering | Premium Hawaiian Corporate Catering in Utah",
+    template: "%s | Buddas Catering",
+  },
+  description:
+    "From breakfast meetings to all-hands lunches. Zero stress, reliable delivery, and food your team actually wants to eat. Serving Utah County.",
+  keywords: [
+    "corporate catering Utah",
+    "Hawaiian catering Utah County",
+    "office lunch delivery Provo",
+    "catering Pleasant Grove UT",
+    "team lunch catering",
+    "breakfast catering Utah",
+  ],
+  authors: [{ name: "Buddas Hawaiian Bakery & Grill" }],
+  creator: "Buddas Hawaiian Bakery & Grill",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: SITE_URL,
+    siteName: "Buddas Catering",
+    title: "Buddas Catering | Premium Hawaiian Corporate Catering in Utah",
+    description:
+      "From breakfast meetings to all-hands lunches. Zero stress, reliable delivery, and food your team actually wants to eat. Serving Utah County.",
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: "Buddas Catering – Hawaiian corporate catering in Utah County",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Buddas Catering | Premium Hawaiian Corporate Catering in Utah",
+    description:
+      "Zero stress catering for Utah County teams. Hawaiian-inspired menus, reliable delivery.",
+    images: [OG_IMAGE],
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+    },
+  },
 };
 
 export default function RootLayout({
@@ -30,9 +71,36 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${dmSans.variable} h-full antialiased scroll-smooth`}
+      className="h-full antialiased scroll-smooth"
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Restaurant",
+              "name": "Buddas Hawaiian Bakery & Grill",
+              "image": `${SITE_URL}/images/occasions/staff-lunch.png`,
+              "@id": SITE_URL,
+              "url": SITE_URL,
+              "telephone": "+1-801-404-1234",
+              "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "123 Island Way",
+                "addressLocality": "Pleasant Grove",
+                "addressRegion": "UT",
+                "postalCode": "84062",
+                "addressCountry": "US"
+              },
+              "servesCuisine": "Hawaiian",
+              "priceRange": "$$",
+              "areaServed": "Utah County"
+            }),
+          }}
+        />
+      </head>
       <body 
         className="min-h-full flex flex-col font-body bg-cream text-brown selection:bg-teal-base/30"
         suppressHydrationWarning

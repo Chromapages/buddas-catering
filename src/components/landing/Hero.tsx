@@ -7,7 +7,48 @@ import { Badge } from "@/components/shared/Badge";
 import { motion } from "framer-motion";
 import { CheckCircle2, Star } from "lucide-react";
 
-export function Hero() {
+interface HeroProps {
+  data?: {
+    badge?: string;
+    headline?: string;
+    subheadline?: string;
+    ratingText?: string;
+    primaryCtaText?: string;
+    primaryCtaLink?: string;
+    secondaryCtaText?: string;
+    secondaryCtaLink?: string;
+    backgroundImage?: { asset?: { url?: string } };
+    features?: string[];
+  };
+}
+
+export function Hero({ data }: HeroProps) {
+  const badge = data?.badge || "Now serving Utah County";
+  const headline = data?.headline || "The Lunch Your Office Will [Actually] Love.";
+  const subheadline = data?.subheadline || "Premium Hawaiian catering for Utah's office managers and EAs. We show up early, handle every detail, and leave your team impressed.";
+  const ratingText = data?.ratingText || "4.9 · 100+ Utah County Companies";
+  const primaryCtaText = data?.primaryCtaText || "Start My Quote";
+  const primaryCtaLink = data?.primaryCtaLink || "#book";
+  const secondaryCtaText = data?.secondaryCtaText || "View Full Menu";
+  const secondaryCtaLink = data?.secondaryCtaLink || "#menu";
+  const backgroundImage = data?.backgroundImage?.asset?.url || "https://images.unsplash.com/photo-1555244162-803834f70033?w=2400&auto=format&fit=crop&q=80";
+  const features = data?.features || ["Same-Day Quotes", "15-Min Early Guarantee"];
+
+  // Helper to parse headline with [term] for teal highlight
+  const renderHeadline = (text: string) => {
+    const parts = text.split(/(\[.*?\])/);
+    return parts.map((part, index) => {
+      if (part.startsWith("[") && part.endsWith("]")) {
+        return (
+          <span key={index} className="text-teal-base">
+            {part.slice(1, -1)}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -33,8 +74,8 @@ export function Hero() {
       {/* Full-Bleed Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://images.unsplash.com/photo-1555244162-803834f70033?w=2400&auto=format&fit=crop&q=80"
-          alt="Premium Hawaiian Catering Spread"
+          src={backgroundImage}
+          alt={headline}
           fill
           priority
           className="object-cover"
@@ -55,44 +96,41 @@ export function Hero() {
             <motion.div variants={itemVariants} className="inline-flex items-center">
               <Badge variant="warning" className="bg-orange/90 text-white border-0 py-1.5 px-4 tracking-widest flex gap-2">
                 <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
-                Now serving Utah County
+                {badge}
               </Badge>
             </motion.div>
             
             <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white font-heading leading-tight md:leading-[1.1]">
-              The Lunch Your Office Will<br />
-              <span className="text-teal-base">Actually</span> Love.
+              {renderHeadline(headline)}
             </motion.h1>
 
             <motion.div variants={itemVariants} className="flex items-center gap-2 py-1">
               <div className="flex text-orange">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-current" />)}
               </div>
-              <span className="text-lg font-bold text-white/90 ml-2">4.9 · 100+ Utah County Companies</span>
+              <span className="text-lg font-bold text-white/90 ml-2">{ratingText}</span>
             </motion.div>
 
             <motion.p variants={itemVariants} className="text-lg md:text-xl text-white/90 leading-relaxed font-medium">
-              Premium Hawaiian catering for Utah's office managers and EAs. We show up early, handle every detail, and leave your team impressed.
+              {subheadline}
             </motion.p>
             
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button size="lg" asChild className="w-full sm:w-auto h-14 px-10 text-lg shadow-xl shadow-teal-dark/20">
-                <Link href="#book">Start My Quote</Link>
+                <Link href={primaryCtaLink}>{primaryCtaText}</Link>
               </Button>
               <Button variant="outline" size="lg" asChild className="w-full sm:w-auto h-14 px-10 text-lg bg-white/10 text-white border-white/30 hover:bg-white/20 hover:text-white backdrop-blur-sm">
-                <Link href="#menu">View Full Menu</Link>
+                <Link href={secondaryCtaLink}>{secondaryCtaText}</Link>
               </Button>
             </motion.div>
 
             <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-              <div className="flex items-center gap-3 text-white/90 font-bold">
-                <CheckCircle2 className="w-6 h-6 text-teal-base" />
-                <span>Same-Day Quotes</span>
-              </div>
-              <div className="flex items-center gap-3 text-white/90 font-bold">
-                <CheckCircle2 className="w-6 h-6 text-teal-base" />
-                <span>15-Min Early Guarantee</span>
-              </div>
+              {features.map((feature, i) => (
+                <div key={i} className="flex items-center gap-3 text-white/90 font-bold">
+                  <CheckCircle2 className="w-6 h-6 text-teal-base" />
+                  <span>{feature}</span>
+                </div>
+              ))}
             </motion.div>
           </div>
         </motion.div>

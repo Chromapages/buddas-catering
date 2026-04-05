@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { 
   Award, 
   Clock, 
@@ -14,7 +14,7 @@ import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
 import Link from "next/link";
-import { getMembershipById } from "@/lib/firebase/services/crm";
+import { getCommitmentById } from "@/lib/firebase/services/commitment.service";
 import { format } from "date-fns";
 
 // Fixed import for icons (lucide-react, not lucide-center)
@@ -26,7 +26,8 @@ import {
   Building2 as BuildingIcon 
 } from "lucide-react";
 
-export default function MembershipDetailPage({ params }: { params: { id: string } }) {
+export default function MembershipDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [membership, setMembership] = useState<any>(null);
@@ -34,28 +35,28 @@ export default function MembershipDetailPage({ params }: { params: { id: string 
   useEffect(() => {
     const fetchMembership = async () => {
       try {
-        const data = await getMembershipById(params.id);
+        const data = await getCommitmentById(id);
         if (!data) {
-          setError("Membership record not found.");
+          setError("Commitment record not found.");
           return;
         }
         setMembership(data);
       } catch (err) {
-        console.error("Error loading membership:", err);
-        setError("Failed to load membership details.");
+        console.error("Error loading commitment:", err);
+        setError("Failed to load commitment details.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchMembership();
-  }, [params.id]);
+  }, [id]);
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-brown/50">
         <Loader2 className="w-8 h-8 animate-spin mb-4" />
-        <p>Loading membership profile...</p>
+        <p>Loading commitment profile...</p>
       </div>
     );
   }
@@ -75,8 +76,8 @@ export default function MembershipDetailPage({ params }: { params: { id: string 
     );
   }
 
-  const eventsCommitted = membership.eventsCommitted || 0;
-  const eventsCompleted = membership.eventsCompleted || 0;
+  const eventsCommitted = membership.ordersCommitted || 0;
+  const eventsCompleted = membership.ordersUsed || 0;
   const progressPercent = eventsCommitted > 0 ? (eventsCompleted / eventsCommitted) * 100 : 0;
 
   return (
@@ -176,7 +177,7 @@ export default function MembershipDetailPage({ params }: { params: { id: string 
       <div className="bg-orange/5 border border-orange/10 rounded-2xl p-6 mt-8">
         <h3 className="text-xs font-bold text-orange uppercase tracking-widest mb-4">Internal Admin Notes</h3>
         <p className="text-sm text-brown/70 leading-relaxed italic">
-          {membership.notes || "No special account handling notes provided for this membership. Check interaction history in the company profile for more context."}
+          {membership.notes || "No special account handling notes provided for this commitment. Check interaction history in the company profile for more context."}
         </p>
       </div>
     </div>

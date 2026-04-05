@@ -46,11 +46,25 @@ const occasions = [
   }
 ];
 
-export function CateringCards() {
+interface CateringCardsProps {
+  sectionData?: {
+    badge?: string;
+    headline?: string;
+    subheadline?: string;
+  };
+}
+
+export function CateringCards({ sectionData }: CateringCardsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+
+  const badge = sectionData?.badge || "Who We Help";
+  const headline = sectionData?.headline || "Pick Your Occasion. We Handle the Rest.";
+  const subheadline = sectionData?.subheadline || "10 to 500+ guests across Utah County. Tap your occasion to start a quote.";
+  
+  const isDefaultHeadline = headline === "Pick Your Occasion. We Handle the Rest.";
 
   const visibleItems = isMobile ? 1 : 2;
   const maxIndex = occasions.length - visibleItems;
@@ -90,12 +104,18 @@ export function CateringCards() {
       
       <div className="container-rig relative z-10">
         <div className="text-center mb-8">
-          <Badge variant="default" className="mb-4 text-teal-base border-teal-base/50 bg-teal-base/5 uppercase tracking-widest text-xs">Who We Help</Badge>
+          <Badge variant="default" className="mb-4 text-teal-base border-teal-base/50 bg-teal-base/5 uppercase tracking-widest text-xs">
+            {badge}
+          </Badge>
           <h2 className="text-3xl md:text-5xl font-bold font-heading text-white mb-3">
-            Pick Your Occasion. <span className="text-secondary">We Handle the Rest.</span>
+            {isDefaultHeadline ? (
+              <>Pick Your Occasion. <span className="text-secondary">We Handle the Rest.</span></>
+            ) : (
+              headline
+            )}
           </h2>
           <p className="text-base md:text-lg text-white/70 max-w-2xl mx-auto">
-            10 to 500+ guests across Utah County. Tap your occasion to start a quote.
+            {subheadline}
           </p>
         </div>
 

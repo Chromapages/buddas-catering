@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/shared/Badge";
 import { cn } from "@/lib/utils";
 import { CRMNotification } from "@/types/crm";
+import { ConfirmModal } from "@/components/shared/ConfirmModal";
 
 export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user, signOut } = useAuth();
@@ -28,6 +29,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -60,14 +62,6 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
     if (name) return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     if (email) return email.slice(0, 2).toUpperCase();
     return "??";
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
   };
 
   return (
@@ -257,7 +251,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href="/app/profile" className="flex items-center">
+                <a href="/app/settings" className="flex items-center">
                   <UserIcon className="mr-2 h-4 w-4 text-brown/40" />
                   <span>Your Profile</span>
                 </a>
@@ -265,7 +259,10 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-orange focus:bg-orange/5 focus:text-orange cursor-pointer"
-                onClick={handleLogout}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setShowLogoutConfirm(true);
+                }}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sign out</span>
@@ -274,6 +271,16 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
           </DropdownMenu>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={signOut}
+        title="Sign Out?"
+        description="Are you sure you want to log out of the CRM dashboard? Any unsaved changes may be lost."
+        confirmText="Sign Out"
+        cancelText="Stay Logged In"
+      />
     </header>
   );
 }

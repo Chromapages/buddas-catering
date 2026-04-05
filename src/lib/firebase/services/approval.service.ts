@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { logActivity } from "./base";
 import { createNotification } from "./notification.service";
+import type { CommissionApproval } from "@/types/crm";
 
 /**
  * Owner-only flow to approve commission payouts.
@@ -24,18 +25,28 @@ export async function approveCommission(
 ) {
   try {
     const commissionRef = doc(db, "commission_approvals", commissionId);
-    
+    const commissionSnap = await getDoc(commissionRef);
+    const data = commissionSnap.data();
+
+    if (!data) throw new Error("Commission not found");
+
     await updateDoc(commissionRef, {
       approved: true,
       approvedById: ownerId,
       approvedAt: serverTimestamp()
     });
 
-    await logActivity("REQUEST", commissionId, "COMMISSION_APPROVED", {}, ownerId, ownerName);
-    
-    const commissionSnap = await getDoc(commissionRef);
-    const data = commissionSnap.data();
-    if (data?.repId) {
+    // Update associated catering request
+    if (data.cateringRequestId) {
+      const requestRef = doc(db, "cateringRequests", data.cateringRequestId);
+      await updateDoc(requestRef, {
+        fulfillmentStatus: "Commission Approved",
+        updatedAt: serverTimestamp()
+      });
+      await logActivity("REQUEST", data.cateringRequestId, "COMMISSION_APPROVED", {}, ownerId, ownerName);
+    }
+
+    if (data.repId) {
       await createNotification(
         data.repId,
         "Commission Approved! 🎉",
@@ -58,24 +69,38 @@ export async function approveCommission(
 export async function rejectCommission(
   commissionId: string,
   ownerId: string,
-  ownerName: string
+  ownerName: string,
+  reason: string
 ) {
   try {
     const commissionRef = doc(db, "commission_approvals", commissionId);
+    const commissionSnap = await getDoc(commissionRef);
+    const data = commissionSnap.data();
+
+    if (!data) throw new Error("Commission not found");
+
     await updateDoc(commissionRef, {
       eligible: false,
+      rejectionReason: reason,
       approvedById: ownerId,
       approvedAt: serverTimestamp()
     });
-    await logActivity("REQUEST", commissionId, "COMMISSION_REJECTED", {}, ownerId, ownerName);
-    
-    const commissionSnap = await getDoc(commissionRef);
-    const data = commissionSnap.data();
-    if (data?.repId) {
+
+    // Update associated catering request
+    if (data.cateringRequestId) {
+      const requestRef = doc(db, "cateringRequests", data.cateringRequestId);
+      await updateDoc(requestRef, {
+        fulfillmentStatus: "Commission Rejected",
+        updatedAt: serverTimestamp()
+      });
+      await logActivity("REQUEST", data.cateringRequestId, "COMMISSION_REJECTED", { reason }, ownerId, ownerName);
+    }
+
+    if (data.repId) {
       await createNotification(
         data.repId,
         "Commission Declined",
-        `Your commission for request ${data.cateringRequestId?.slice(-6)} was not approved.`,
+        `Your commission for request ${data.cateringRequestId?.slice(-6)} was not approved. Reason: ${reason}`,
         "WARNING",
         `/app/requests/${data.cateringRequestId}`
       );
@@ -107,7 +132,7 @@ export async function getAllCommissionApprovals() {
 /**
  * Fetches pending commission approvals (Owner/Ops sees all, Rep sees own).
  */
-export async function getPendingApprovals(userId?: string, userRole?: string) {
+export async function getPendingApprovals(userId?: string, userRole?: string): Promise<CommissionApproval[]> {
   try {
     let approvalsRef = query(collection(db, "commission_approvals"), where("approved", "==", false));
     
@@ -118,7 +143,7 @@ export async function getPendingApprovals(userId?: string, userRole?: string) {
     const q = query(approvalsRef, limit(5));
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CommissionApproval));
   } catch (error) {
     console.error("Error fetching pending approvals:", error);
     return [];

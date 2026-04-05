@@ -32,18 +32,28 @@ const faqs: FAQItem[] = [
   }
 ];
 
-export function FAQ() {
+interface FAQProps {
+  sectionData?: {
+    headline?: string;
+    subheadline?: string;
+  };
+}
+
+export function FAQ({ sectionData }: FAQProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0); // First one open by default
+
+  const headline = sectionData?.headline || "Common Questions";
+  const subheadline = sectionData?.subheadline || "Everything you need to know about island-inspired catering for your team.";
 
   return (
     <section id="faq" className="bg-cream py-24">
-      <div className="container mx-auto max-w-3xl px-4 md:px-6">
+      <div className="mx-auto max-w-4xl px-4 md:px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold font-heading text-teal-dark mb-4">
-            Common Questions
+            {headline}
           </h2>
           <p className="text-lg text-brown/80 max-w-2xl mx-auto">
-            Everything you need to know about island-inspired catering for your team.
+            {subheadline}
           </p>
         </div>
 

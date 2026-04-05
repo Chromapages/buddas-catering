@@ -5,6 +5,7 @@ import {
   getDocs, 
   collection,
   query, 
+  where,
   orderBy,
   serverTimestamp
 } from "firebase/firestore";
@@ -35,5 +36,25 @@ export async function updateUserProfile(userId: string, displayName: string) {
   } catch (error) {
     console.error("Error updating user profile:", error);
     throw error;
+  }
+}
+
+/**
+ * Fetches all users with the 'rep' role and returns a record of { [uid]: displayName }.
+ */
+export async function getSalesReps(): Promise<Record<string, string>> {
+  try {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("role", "==", "rep"));
+    const snap = await getDocs(q);
+    const reps: Record<string, string> = {};
+    snap.docs.forEach(doc => {
+      const data = doc.data();
+      reps[doc.id] = data.displayName || data.email || "Unknown Rep";
+    });
+    return reps;
+  } catch (error) {
+    console.error("Error fetching sales reps:", error);
+    return {};
   }
 }

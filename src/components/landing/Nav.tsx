@@ -14,6 +14,7 @@ export function Nav() {
   const navLinks = [
     { name: "How It Works", href: "#how-it-works" },
     { name: "Catering Menu", href: "#menu" },
+    { name: "Reviews", href: "#reviews" },
     { name: "Memberships", href: "#memberships" },
     { name: "FAQ", href: "#faq" },
   ];

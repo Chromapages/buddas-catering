@@ -24,19 +24,33 @@ const steps = [
   },
 ];
 
-export function HowItWorks() {
+interface HowItWorksProps {
+  sectionData?: {
+    badge?: string;
+    headline?: string;
+    subheadline?: string;
+  };
+}
+
+export function HowItWorks({ sectionData }: HowItWorksProps) {
+  const badge = sectionData?.badge || "3 Easy Steps";
+  const headline = sectionData?.headline || "From Quote to Setup in 3 Steps";
+  const subheadline = sectionData?.subheadline || "You focus on the meeting. We handle the feast.";
+
   return (
     <section id="how-it-works" className="bg-cream py-24 relative overflow-hidden transition-colors duration-500">
       <div className="container-rig relative z-10">
-        <div className="text-center mb-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <Badge variant="default" className="mb-4 uppercase tracking-widest text-teal-base border-teal-base/30">
-            3 Easy Steps
-          </Badge>
-          <h2 className="text-3xl md:text-5xl font-bold font-heading text-teal-dark mb-4">
-            From Quote to Setup in 3 Steps
-          </h2>
-          <p className="text-lg md:text-xl text-brown/70 max-w-2xl mx-auto">
-            You focus on the meeting. We handle the feast.
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-x-12 gap-y-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="space-y-4 max-w-3xl">
+            <Badge variant="default" className="uppercase tracking-widest text-teal-base border-teal-base/30 bg-teal-base/5">
+              {badge}
+            </Badge>
+            <h2 className="text-4xl md:text-6xl font-bold font-heading text-teal-dark tracking-tight leading-[1.1]">
+              {headline}
+            </h2>
+          </div>
+          <p className="text-lg md:text-xl text-brown/70 max-w-xs md:text-right pb-1 leading-tight font-medium">
+            {subheadline}
           </p>
         </div>
 

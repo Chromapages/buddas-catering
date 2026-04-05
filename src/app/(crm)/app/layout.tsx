@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/crm/Sidebar";
 import { TopNav } from "@/components/crm/TopNav";
+import { MobileNavBar } from "@/components/crm/MobileNavBar";
 import { AuthGuard } from "@/components/crm/AuthGuard";
+import { CommandPalette } from "@/components/crm/CommandPalette";
+import { ErrorBoundary } from "@/components/crm/ErrorBoundary";
 import { Menu, X } from "lucide-react";
+import { useAuth } from "@/lib/firebase/context/auth";
+import { cn } from "@/lib/utils";
 
 export default function CRMLayout({
   children,
@@ -12,10 +17,13 @@ export default function CRMLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { role } = useAuth();
+  const isRep = role === 'rep';
 
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-gray-bg overflow-hidden">
+      <div className="flex h-screen bg-gray-bg overflow-hidden relative">
+        <CommandPalette />
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div 
@@ -52,10 +60,15 @@ export default function CRMLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopNav onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        <main className={cn(
+          "flex-1 overflow-y-auto",
+          isRep && "pb-16 lg:pb-0"
+        )}>
+          <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
+
+      <MobileNavBar />
     </div>
     </AuthGuard>
   );

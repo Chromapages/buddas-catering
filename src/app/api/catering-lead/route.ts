@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { intakeSchema } from "@/lib/schemas/intake";
 import { db } from "@/lib/firebase/admin";
+import * as admin from 'firebase-admin';
 import type { Company, Contact, Lead, CateringRequest } from "@/lib/types";
 
 // Standardize phone numbers to just digits
@@ -25,26 +26,41 @@ export async function POST(request: Request) {
     const normalizedEmail = data.email.toLowerCase().trim();
     // Phone usually normalized, omitting for linting
 
-    // 2. Dedup: Check for existing contact by exact email match
-    const contactsQuery = await db.collection("contacts").where("email", "==", normalizedEmail).limit(1).get();
+    const normalizedPhone = normalizePhone(data.phone);
+    const normalizedCompanyName = data.company.trim();
+
+    // 2. Dedup: Check for existing contact by email OR phone
+    let existingContactDoc: any = null;
+    
+    // First try Email
+    const contactsByEmail = await db.collection("contacts").where("email", "==", normalizedEmail).limit(1).get();
+    if (!contactsByEmail.empty) {
+      existingContactDoc = contactsByEmail.docs[0];
+    } else {
+      // Then try Phone
+      const contactsByPhone = await db.collection("contacts").where("phone", "==", data.phone).limit(1).get();
+      if (!contactsByPhone.empty) {
+        existingContactDoc = contactsByPhone.docs[0];
+      }
+    }
     
     let contactId = "";
     let companyId = "";
-    const isDuplicate = !contactsQuery.empty;
+    const isDuplicate = !!existingContactDoc;
 
     const batch = db.batch();
-    const now = new Date().toISOString();
+    const now = admin.firestore.Timestamp.now();
 
-    if (!contactsQuery.empty) {
+    if (existingContactDoc) {
       // Existing contact -> Use their ID and their Company ID
-      const existingContact = contactsQuery.docs[0];
-      contactId = existingContact.id;
-      companyId = existingContact.data().companyId as string;
+      contactId = existingContactDoc.id;
+      companyId = existingContactDoc.data().companyId as string;
       
-      // Update contact's phone and name if changed (optional, but good for freshness)
-      batch.update(existingContact.ref, { 
+      // Update contact's phone and name if changed (freshening data)
+      batch.update(existingContactDoc.ref, { 
         fullName: data.name,
-        phone: data.phone 
+        phone: data.phone,
+        updatedAt: now
       });
       
       // Update company's source history
@@ -61,20 +77,29 @@ export async function POST(request: Request) {
       }
 
     } else {
-      // New Contact -> Create Company and Contact
-      const newCompanyRef = db.collection("companies").doc();
-      companyId = newCompanyRef.id;
+      // No contact found, but check if the Company already exists by name
+      const companyQuery = await db.collection("companies").where("name", "==", normalizedCompanyName).limit(1).get();
       
-      const newCompany: Company = {
-        id: companyId,
-        name: data.company,
-        totalEventsCompleted: 0,
-        sourceHistory: [data.source],
-        createdAt: now,
-        updatedAt: now,
-      };
-      batch.set(newCompanyRef, newCompany);
+      if (!companyQuery.empty) {
+        // Link new contact to existing company
+        companyId = companyQuery.docs[0].id;
+      } else {
+        // Create brand new company
+        const newCompanyRef = db.collection("companies").doc();
+        companyId = newCompanyRef.id;
+        
+        const newCompany: Company = {
+          id: companyId,
+          name: data.company,
+          totalEventsCompleted: 0,
+          sourceHistory: [data.source],
+          createdAt: now,
+          updatedAt: now,
+        };
+        batch.set(newCompanyRef, newCompany);
+      }
 
+      // Create new contact (linked to either existing or new company)
       const newContactRef = db.collection("contacts").doc();
       contactId = newContactRef.id;
       
@@ -89,42 +114,29 @@ export async function POST(request: Request) {
       batch.set(newContactRef, newContact);
     }
 
-    // 3. Assign Sales Rep (True Round-robin)
-    let assignedRep = { id: "REP_001", name: "Alex K." }; // Default fallback
+    // 3. Assign Sales Rep (Explicit or Auto-Assign)
+    let assignedRep = { 
+      id: data.assignedRepId || "unassigned", 
+      name: data.assignedRepName || "Unassigned Queue" 
+    };
     
-    try {
-      const configRef = db.collection("system_configs").doc("lead_assignment");
-      const repsSnap = await db.collection("users")
-        .where("role", "==", "rep")
-        .where("active", "==", true)
-        .get();
-      
-      const reps = repsSnap.docs.map(doc => ({ 
-        id: doc.id, 
-        name: doc.data().displayName || "Lead Rep" 
-      }));
-      
-      if (reps.length > 0) {
-        await db.runTransaction(async (transaction) => {
-          const configDoc = await transaction.get(configRef);
-          const lastIndex = configDoc.exists ? (configDoc.data()?.lastIndex ?? -1) : -1;
-          
-          const nextIndex = (lastIndex + 1) % reps.length;
-          assignedRep = reps[nextIndex];
-          
-          transaction.set(configRef, { 
-            lastIndex: nextIndex,
-            updatedAt: now,
-            lastAssignedEmail: data.email
-          }, { merge: true });
-        });
-      }
-    } catch (err) {
-      console.warn("Round-robin failed, falling back to random assignment:", err);
-      const fallbackReps = await db.collection("users").where("role", "==", "rep").limit(5).get();
-      if (!fallbackReps.empty) {
-        const reps = fallbackReps.docs.map(doc => ({ id: doc.id, name: doc.data().displayName }));
-        assignedRep = reps[Math.floor(Math.random() * reps.length)];
+    let assignmentMethod = data.assignedRepId ? "Manual Entry" : "Auto-Assign";
+
+    if (!data.assignedRepId) {
+      try {
+        const repsSnap = await db.collection("users")
+          .where("role", "in", ["rep", "owner"])
+          .where("active", "==", true)
+          .get();
+        
+        if (!repsSnap.empty) {
+          // Simple random assignment for now (can be upgraded to round-robin later)
+          const randomIndex = Math.floor(Math.random() * repsSnap.size);
+          const repDoc = repsSnap.docs[randomIndex];
+          assignedRep = { id: repDoc.id, name: repDoc.data().displayName || "Rep" };
+        }
+      } catch (err) {
+        console.error("Failed to auto-assign rep:", err);
       }
     }
 
@@ -140,6 +152,7 @@ export async function POST(request: Request) {
       contactName: data.name,
       status: "New",
       assignedRepId: assignedRep.id,
+      assignedRepName: assignedRep.name,
       source: data.source,
       medium: data.medium,
       campaign: data.campaign || "",
@@ -149,9 +162,14 @@ export async function POST(request: Request) {
       referringUrl: data.referringUrl || "",
       isDuplicate, // Flag if they already existed
       needsReview: false,
+      archived: false,
+      isWaitlist: false,
       createdAt: now,
       lastActivityAt: now,
       statusChangedAt: now,
+      statusHistory: [
+        { status: "New", timestamp: now }
+      ]
     };
     batch.set(leadRef, newLead);
 
@@ -166,6 +184,7 @@ export async function POST(request: Request) {
       contactId,
       contactName: data.name,
       assignedRepId: assignedRep.id,
+      assignedRepName: assignedRep.name,
       eventType: data.eventType,
       cateringNeed: data.cateringNeed,
       estimatedGroupSize: data.estimatedGroupSize,
@@ -189,8 +208,8 @@ export async function POST(request: Request) {
         groupSize: data.estimatedGroupSize,
         isDuplicate
       },
-      actorId: "system",
-      actorName: "System (Public Form)",
+      actorId: data.medium === "internal" ? assignedRep.id : "system",
+      actorName: data.medium === "internal" ? `${assignedRep.name} (Manual)` : "System (Public Form)",
       createdAt: now,
     });
 
@@ -202,15 +221,15 @@ export async function POST(request: Request) {
       actionType: "REP_ASSIGNED",
       data: { 
         repId: assignedRep.id, 
-        repName: assignedRep.name 
+        repName: assignedRep.name,
+        method: assignmentMethod
       },
       actorId: "system",
-      actorName: "System (Auto-Assign)",
+      actorName: `System (${assignmentMethod})`,
       createdAt: now,
     });
 
     // 7. Trigger Notifications
-    // Notify the assigned Sales Rep
     const repNotifRef = db.collection("notifications").doc();
     batch.set(repNotifRef, {
       userId: assignedRep.id,
@@ -220,6 +239,26 @@ export async function POST(request: Request) {
       read: false,
       link: `/app/leads/${leadId}`,
       createdAt: now
+    });
+
+    // 7b. Create Automated Task (Revenue Mode)
+    const taskRef = db.collection("tasks").doc();
+    const dueDate = new Date();
+    dueDate.setHours(dueDate.getHours() + 2); // 2-hour SLA
+
+    batch.set(taskRef, {
+      id: taskRef.id,
+      subject: `Quote Request: ${data.eventType}`,
+      description: `New lead from ${data.company} (${data.name}). Promised response within 2 hours.`,
+      dueDate: admin.firestore.Timestamp.fromDate(dueDate),
+      status: 'Upcoming',
+      priority: 'High',
+      assignedRepId: assignedRep.id,
+      entityType: 'LEAD',
+      entityId: leadId,
+      entityName: data.company,
+      createdAt: admin.firestore.Timestamp.now(),
+      updatedAt: admin.firestore.Timestamp.now(),
     });
 
     // Notify all Owners
@@ -239,6 +278,13 @@ export async function POST(request: Request) {
 
     // Execute the atomic batch write
     await batch.commit();
+
+    // 8. Send Confirmation Email to the Lead (Async)
+    // We don't await this to keep the API response snappy, but we trigger it now
+    const { sendLeadConfirmation } = await import("@/lib/utils/notifications");
+    sendLeadConfirmation(data.name, normalizedEmail).catch(err => {
+      console.error("Failed to send lead confirmation email:", err);
+    });
 
     return NextResponse.json({ success: true, leadId });
 

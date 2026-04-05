@@ -1,6 +1,5 @@
 import { Nav } from "@/components/landing/Nav";
 import { Footer } from "@/components/landing/Footer";
-import { StickyCTA } from "@/components/landing/StickyCTA";
 
 export default function PublicLayout({
   children,
@@ -8,17 +7,12 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="flex min-h-screen flex-col bg-gray-bg selection:bg-teal-base/30">
       <Nav />
-      {/* 
-        This is the main public surface wrapping the landing page. 
-        It does not include any auth guards, and SSG applies here.
-      */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1">
         {children}
       </main>
-      <StickyCTA />
       <Footer />
-    </>
+    </div>
   );
 }

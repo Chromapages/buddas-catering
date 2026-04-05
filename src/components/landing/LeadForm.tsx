@@ -16,13 +16,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover
 import { Calendar } from "@/components/ui/Calendar";
 import { format } from "date-fns";
 
-export function LeadForm() {
+interface LeadFormProps {
+  sectionData?: {
+    headline?: string;
+    subheadline?: string;
+  };
+}
+
+export function LeadForm({ sectionData }: LeadFormProps) {
   const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [date, setDate] = useState<Date | undefined>(undefined);
+
+  const headline = sectionData?.headline || "Get Your Custom Quote in 2 Hours.";
+  const subheadline = sectionData?.subheadline || "Tell us about your event — group size, date, dietary needs. We respond within 2 hours with a custom quote. No commitment required.";
 
   const defaultNeed = searchParams.get("need");
   const preferredNeed = ["Breakfast", "Lunch", "Pastries"].includes(defaultNeed as string) ? defaultNeed : "Not Sure Yet";
@@ -87,7 +97,7 @@ export function LeadForm() {
   if (isSuccess) {
     return (
       <section id="book" className="bg-cream py-24 border-t border-gray-border">
-        <div className="container mx-auto max-w-3xl px-4 md:px-6">
+        <div className="mx-auto max-w-4xl px-4 md:px-6">
           <SuccessState onReset={() => { setIsSuccess(false); setStep(1); }} />
         </div>
       </section>
@@ -103,10 +113,10 @@ export function LeadForm() {
           <div className="w-full lg:w-1/3 space-y-8">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold font-heading text-teal-dark mb-4 text-center lg:text-left">
-                Get Your Custom Quote in 2 Hours.
+                {headline}
               </h2>
               <p className="text-lg text-brown/80 text-center lg:text-left">
-                Tell us about your event — group size, date, dietary needs. We respond within 2 hours with a custom quote. No commitment required.
+                {subheadline}
               </p>
             </div>
 
@@ -116,9 +126,6 @@ export function LeadForm() {
                 "Buddas is the only caterer we use now. They are literally setting up 20 minutes early every single time. Total lifesavers for our all-hands meetings."
               </p>
               <div className="flex items-center gap-3">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden grayscale">
-                   <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80" alt="Sarah J." fill className="object-cover" />
-                </div>
                 <div>
                   <p className="text-sm font-bold text-teal-dark">Sarah J.</p>
                   <p className="text-xs text-brown/60">Office Manager, TechFlow</p>

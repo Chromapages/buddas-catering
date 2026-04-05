@@ -13,7 +13,7 @@ export type LeadStatus =
 
 export type MembershipTier = '2' | '4' | '6';
 
-export type FulfillmentStatus = 'Pending' | 'In Progress' | 'Fulfilled' | 'Cancelled';
+export type FulfillmentStatus = 'Pending' | 'In Progress' | 'Fulfilled' | 'Invoiced' | 'Cancelled';
 
 export interface Company {
   id: string; // Document ID
@@ -25,11 +25,12 @@ export interface Company {
   industry?: string;
   assignedRepId?: string;
   activeMembershipId?: string;
-  totalEventsCompleted: number;
+  totalEventsCompleted?: number;
+  firstOrderPlaced?: boolean;
   notes?: string;
   sourceHistory: string[];
-  createdAt: string; // ISO String
-  updatedAt: string; // ISO String
+  createdAt: any; // Firestore Timestamp
+  updatedAt: any; // Firestore Timestamp
 }
 
 export interface Contact {
@@ -41,7 +42,12 @@ export interface Contact {
   companyId: string;
   preferredContactMethod?: string;
   notes?: string;
-  createdAt: string; // ISO String
+  createdAt: any; // Firestore Timestamp
+}
+
+export interface StatusHistoryEntry {
+  status: LeadStatus;
+  timestamp: any; // Firestore Timestamp
 }
 
 export interface Lead {
@@ -51,6 +57,7 @@ export interface Lead {
   contactId: string;
   contactName: string;
   assignedRepId?: string;
+  assignedRepName?: string;
   status: LeadStatus;
   
   // Attribution
@@ -64,22 +71,28 @@ export interface Lead {
 
   isDuplicate: boolean;
   needsReview: boolean;
+  archived?: boolean;
+  isWaitlist?: boolean;
   
-  createdAt: string; // ISO String
-  lastActivityAt: string; // ISO String
-  statusChangedAt: string; // ISO String
+  createdAt: any; // Firestore Timestamp
+  lastActivityAt: any; // Firestore Timestamp
+  statusChangedAt: any; // Firestore Timestamp
+  convertedAt?: any; // Firestore Timestamp
+  statusHistory?: StatusHistoryEntry[];
 }
 
 export interface CateringRequest {
   id: string; // Document ID
   leadId: string;
+  assignedRepId?: string;
+  assignedRepName?: string;
+  
   companyId: string;
   companyName: string;
   contactId: string;
   contactName: string;
-  assignedRepId?: string;
-  
-  eventType: string;
+
+  eventType?: string;
   cateringNeed: 'Breakfast' | 'Lunch' | 'Pastries' | 'Not Sure Yet';
   estimatedGroupSize: number;
   preferredDate?: string; // ISO String
@@ -88,23 +101,27 @@ export interface CateringRequest {
   fulfillmentStatus?: FulfillmentStatus;
   notes?: string;
   
-  createdAt: string; // ISO String
+  createdAt: any; // Firestore Timestamp
 }
+
+export type MembershipStatus = 'Pending' | 'Active' | 'Expiring' | 'Lapsed' | 'Renewed';
 
 export interface Membership {
   id: string; // Document ID
   companyId: string;
   tier: MembershipTier;
+  status: MembershipStatus;
   discountPercent: number;
   eventsCommitted: number;
   eventsCompleted: number;
+  firstOrderPlaced: boolean;
   includesDelivery: boolean;
   includesSetup: boolean;
-  startDate: string; // ISO String
-  renewalDate: string; // ISO String
+  startDate: any; // Firestore Timestamp
+  renewalDate: any; // Firestore Timestamp
   active: boolean;
   notes?: string;
-  createdAt: string; // ISO String
+  createdAt: any; // Firestore Timestamp
 }
 
 export interface CommissionApproval {
@@ -114,9 +131,9 @@ export interface CommissionApproval {
   eligible: boolean;
   approved: boolean;
   approvedById?: string;
-  approvedAt?: string; // ISO String
+  approvedAt?: any; // Firestore Timestamp
   notes?: string;
-  createdAt: string; // ISO String
+  createdAt: any; // Firestore Timestamp
 }
 
 export interface Activity {
@@ -131,7 +148,7 @@ export interface Activity {
   actorId?: string; // System if undefined
   actorName?: string;
   
-  createdAt: string; // ISO String
+  createdAt: any; // Firestore Timestamp
 }
 
 export interface AppUser {
@@ -141,4 +158,40 @@ export interface AppUser {
   role: Role;
   active: boolean;
   createdAt: string; // ISO String
+}
+
+export type ProgramTier = '2_events' | '4_events' | '6_events';
+export type ProgramStatus = 'Pending' | 'Active' | 'Declined';
+
+export interface ProgramSignup {
+  id: string;
+  // Section A — Business Info
+  businessName: string;
+  contactName: string;
+  jobTitle?: string;
+  phone: string;
+  email: string;
+  address?: string;
+  city?: string;
+  zipCode?: string;
+  preferredContactMethod: 'Call' | 'Text' | 'Email';
+  // Section B — Org Type
+  organizationType: string;
+  // Section C — Program Selection
+  programTier: ProgramTier;
+  // Section D — Catering Needs
+  estimatedGroupSize: string;
+  interestedIn: string[];
+  typicalEventTypes: string[];
+  estimatedFirstOrderDate?: string;
+  preferredOrderingFrequency?: string;
+  preferredMenuItems?: string[];
+  dietaryRestrictions?: string[];
+  deliveryOrPickup: 'Delivery' | 'Pickup' | 'Both';
+  additionalNotes?: string;
+  // CRM meta
+  status: ProgramStatus;
+  assignedRepId?: string;
+  linkedLeadId?: string;
+  createdAt: any; // Firestore Timestamp
 }

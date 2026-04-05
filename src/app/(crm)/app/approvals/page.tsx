@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Check, X, Search, Filter } from "lucide-react";
+import { Check, X, Search, Filter, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/shared/Input";
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
@@ -11,6 +11,7 @@ import {
   getAllCateringRequests,
   approveCommission,
   rejectCommission,
+  getAllUsers,
 } from "@/lib/firebase/services/crm";
 import { useAuth } from "@/lib/firebase/context/auth";
 import toast from "react-hot-toast";
@@ -21,6 +22,7 @@ export default function ApprovalQueuePage() {
   const { user } = useAuth();
   const [approvals, setApprovals] = useState<any[]>([]);
   const [requestMap, setRequestMap] = useState<Record<string, any>>({});
+  const [userMap, setUserMap] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
@@ -29,14 +31,21 @@ export default function ApprovalQueuePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [approvalsData, requestsData] = await Promise.all([
+      const [approvalsData, requestsData, usersData] = await Promise.all([
         getAllCommissionApprovals(),
         getAllCateringRequests(),
+        getAllUsers(),
       ]);
+      
       setApprovals(approvalsData);
-      const map: Record<string, any> = {};
-      requestsData.forEach((r: any) => { map[r.id] = r; });
-      setRequestMap(map);
+      
+      const reqMap: Record<string, any> = {};
+      requestsData.forEach((r: any) => { reqMap[r.id] = r; });
+      setRequestMap(reqMap);
+
+      const uMap: Record<string, any> = {};
+      usersData.forEach((u: any) => { uMap[u.id] = u; });
+      setUserMap(uMap);
     } catch (error) {
       console.error("Error fetching approvals:", error);
     } finally {
@@ -86,9 +95,12 @@ export default function ApprovalQueuePage() {
 
   const handleReject = async (approvalId: string) => {
     if (!user) return;
+    const reason = window.prompt("Reason for rejection?", "Does not meet criteria");
+    if (reason === null) return; // User cancelled
+
     setActionInProgress(approvalId);
     try {
-      await rejectCommission(approvalId, user.uid, user.displayName || user.email || "Owner");
+      await rejectCommission(approvalId, user.uid, user.displayName || user.email || "Owner", reason);
       toast.success("Commission rejected.");
       await fetchData();
     } catch {
@@ -156,6 +168,7 @@ export default function ApprovalQueuePage() {
                 <th className="px-6 py-4">Client / Event</th>
                 <th className="px-6 py-4">Submitted</th>
                 <th className="px-6 py-4">Quote Value</th>
+                <th className="px-6 py-4">Eligibility</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -176,12 +189,12 @@ export default function ApprovalQueuePage() {
                   const status = getApprovalStatus(approval);
                   const isActing = actionInProgress === approval.id;
 
-                  return (
-                    <tr key={approval.id} className="hover:bg-gray-bg/50 transition-colors">
-                      <td className="px-6 py-4 font-semibold">
-                        <span className="block">{approval.repId || "—"}</span>
-                        <span className="block text-xs text-brown/50 font-normal">Rep ID</span>
-                      </td>
+                    return (
+                      <tr key={approval.id} className="hover:bg-gray-bg/50 transition-colors">
+                        <td className="px-6 py-4 font-semibold">
+                          <span className="block">{userMap[approval.repId]?.displayName || approval.repName || "Unknown Rep"}</span>
+                          <span className="block text-xs text-brown/50 font-normal">{userMap[approval.repId]?.email || "No Email"}</span>
+                        </td>
                       <td className="px-6 py-4">
                         <span className="block font-medium text-brown">
                           {request.companyName || "Unknown Client"}
@@ -197,6 +210,19 @@ export default function ApprovalQueuePage() {
                         {request.quoteAmount != null
                           ? `$${Number(request.quoteAmount).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
                           : "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        {approval.eligible === false ? (
+                          <div className="flex items-center gap-1.5 text-orange">
+                            <AlertCircle className="w-4 h-4" />
+                            <span className="text-xs font-bold">{approval.reason || "Non-Qualifying"}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-teal-base">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="text-xs font-bold">Eligible</span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         {status === "Pending" && <Badge variant="warning">Pending Review</Badge>}

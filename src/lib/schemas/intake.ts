@@ -25,6 +25,10 @@ export const intakeSchema = z.object({
   refCode: z.string().optional(),
   landingPageSlug: z.string().optional(),
   referringUrl: z.string().optional(),
+
+  // Optional explicit assignment
+  assignedRepId: z.string().optional(),
+  assignedRepName: z.string().optional(),
 });
 
 export type IntakeFormData = z.infer<typeof intakeSchema>;

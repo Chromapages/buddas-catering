@@ -10,33 +10,35 @@ import "./calendar-styles.css"; // We'll create this for custom styling
 const localizer = momentLocalizer(moment);
 
 interface CateringCalendarProps {
-  requests: any[]; // Using any because of potential variations, but mapping to Calendar event format
+  requests: any[];
+  reps?: Record<string, string>; // Map of repId to name
 }
 
-export const CateringCalendar = ({ requests }: CateringCalendarProps) => {
+export const CateringCalendar = ({ requests, reps = {} }: CateringCalendarProps) => {
   const events = useMemo(() => {
     return requests.map(req => {
-      // preferredDate is usually a Firestore timestamp or a string
       const date = req.preferredDate?.seconds 
         ? new Date(req.preferredDate.seconds * 1000)
         : new Date(req.preferredDate || Date.now());
 
-      // Set a default time if only date is provided
       const start = new Date(date);
-      start.setHours(11, 0, 0); // Default 11 AM
+      start.setHours(11, 0, 0);
       
       const end = new Date(date);
-      end.setHours(13, 0, 0); // Default 1 PM
+      end.setHours(13, 0, 0);
+
+      const repName = req.assignedRepId ? (reps[req.assignedRepId] || 'Assigned') : 'Unassigned';
+      const amount = req.quoteAmount ? ` - $${req.quoteAmount.toLocaleString()}` : '';
 
       return {
         id: req.id,
-        title: `${req.companyName || 'Catering'} - ${req.eventType || 'Request'}`,
+        title: `${req.companyName || 'Catering'} (${repName})${amount}`,
         start,
         end,
         resource: req,
       };
     });
-  }, [requests]);
+  }, [requests, reps]);
 
   const eventPropGetter = (event: any) => {
     const status = event.resource.fulfillmentStatus;

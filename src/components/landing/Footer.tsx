@@ -1,6 +1,23 @@
 import Link from "next/link";
+import { client } from "@/sanity/lib/client";
+import { siteSettingsQuery } from "@/sanity/lib/queries";
 
-export function Footer() {
+interface SiteSettings {
+  phoneNumber?: string;
+}
+
+async function getPhone(): Promise<string | null> {
+  try {
+    const settings = await client.fetch<SiteSettings>(siteSettingsQuery);
+    return settings?.phoneNumber ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function Footer() {
+  const phone = await getPhone();
+
   return (
     <footer className="bg-cream text-brown py-12 border-t border-gray-border">
       <div className="container-rig">
@@ -29,9 +46,17 @@ export function Footer() {
             <h4 className="font-semibold mb-4 text-teal-dark">Company</h4>
             <ul className="space-y-2 text-sm text-brown/70">
               <li><Link href="#faq" className="hover:text-teal-base transition-colors">FAQ</Link></li>
+              <li><Link href="/privacy" className="hover:text-teal-base transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-teal-base transition-colors">Terms of Service</Link></li>
               <li><Link href="/login" className="hover:text-teal-base transition-colors underline decoration-teal-base/20 underline-offset-4 font-medium text-brown/90">Team Login</Link></li>
               <li><span>Pleasant Grove, UT</span></li>
-              <li><a href="tel:18005551234" className="hover:text-teal-base transition-colors">(800) 555-1234</a></li>
+              {phone && (
+                <li>
+                  <a href={`tel:${phone.replace(/\D/g, '')}`} className="hover:text-teal-base transition-colors">
+                    {phone}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>

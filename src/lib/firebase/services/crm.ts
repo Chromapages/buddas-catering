@@ -1,18 +1,16 @@
-/**
- * CRM Service Barrel
- * Re-exports domain services to maintain backward compatibility.
- */
-
 export * from "./base";
-export * from "./lead.service";
-export * from "./company.service";
-export * from "./request.service";
-export * from "./approval.service";
-export * from "./notification.service";
-export * from "./user.service";
 export * from "./analytics.service";
-export * from "./membership.service";
+export * from "./approval.service";
+export * from "./commitment.service";
+export * from "./company.service";
 export * from "./contact.service";
-
-// Note: Re-exporting individual functions is managed by 'export *' 
-// if there are no naming collisions.
+export * from "./invitation.service";
+export * from "./lead.service";
+export * from "./note.service";
+export * from "./notification.service";
+export * from "./order.service";
+export * from "./program.service";
+export * from "./request.service";
+export * from "./sales.service";
+export * from "./task.service";
+export * from "./user.service";

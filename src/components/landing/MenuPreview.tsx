@@ -1,186 +1,268 @@
 "use client";
 
-import { useState } from "react";
-import { Coffee, Utensils, Cake, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { ArrowRight, ShoppingCart, Plus, Utensils, MoveRight } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
-import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-const MENU_CATEGORIES = [
+interface MenuItem {
+  _id: string;
+  name: string;
+  category: {
+    title: string;
+    slug: { current: string };
+    type: string;
+  };
+  description?: string;
+  imageUrl?: string;
+  priceTitle?: string;
+  price?: string | number;
+  inclusionsSummary?: string;
+  selectionTitle?: string;
+  selectionItems?: string[];
+  badge?: string;
+  type?: "product" | "info";
+}
+
+interface MenuPreviewProps {
+  items?: MenuItem[];
+  sectionData?: {
+    badge?: string;
+    headline?: string;
+    subheadline?: string;
+  };
+}
+
+const MOCK_ITEMS: MenuItem[] = [
   {
-    id: "breakfast",
-    title: "Tropical Breakfast",
-    icon: Coffee,
-    description: "Start the day right — our breakfast spreads are built for morning all-hands and early kickoffs.",
-    image: "https://images.unsplash.com/photo-1495147466023-ac5c588e2e94?w=800&q=80",
-    items: [
-      { name: "Kona Coffee Cake", detail: "Spiced streusel with 100% Kona coffee swirl" },
-      { name: "Tropical Fruit Platter", detail: "Fresh carved pineapple, papaya, mango & kiwi" },
-      { name: "Hawaiian Sweet Sliders", detail: "Portuguese sausage, egg & cheese on sweet rolls" },
-      { name: "French Press Kona Coffee", detail: "Premium high-altitude roast from the Big Island" }
-    ],
-    isPopular: false
+    _id: "1",
+    name: "The Luau Feast",
+    category: { title: "Packages", slug: { current: "packages" }, type: "both" },
+    badge: "MOST POPULAR",
+    price: "$24.50/pp",
+    description: "Our comprehensive island experience including Kalua pork, huli huli chicken, and signature sides.",
   },
   {
-    id: "lunch",
-    title: "Signature Plate Lunch",
-    icon: Utensils,
-    description: "Our most-ordered lunch for a reason: savory proteins, island sides, and generous portions that keep every seat happy.",
-    image: "https://images.unsplash.com/photo-1544148103-0773bf10d330?w=800&q=80",
-    items: [
-      { name: "Island Teriyaki Chicken", detail: "Charbroiled thigh with signature house glaze" },
-      { name: "Traditional Kalua Pork", detail: "Slow-roasted, succulent shredded pork" },
-      { name: "Artisan Mac Salad", detail: "Ultra-creamy with finely grated carrots & onions" },
-      { name: "Furikake White Rice", detail: "Perfectly steamed jasmine rice with seasoning" }
-    ],
-    isPopular: true
+    _id: "2",
+    name: "Pacific Bowl Bar",
+    category: { title: "Build-Your-Own", slug: { current: "build-your-own" }, type: "both" },
+    price: "$18.00/pp",
+    description: "Customizable fresh seafood and vegan options.",
   },
   {
-    id: "pastries",
-    title: "Signature Sweets",
-    icon: Cake,
-    description: "The perfect finish to any event. Baked fresh every morning — they go fast.",
-    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80",
-    items: [
-      { name: "Pink Guava Chiffon", detail: "Light as air with fresh guava nectar frosting" },
-      { name: "Creamy Haupia Squares", detail: "Traditional coconut milk pudding on shortbread" },
-      { name: "Lilikoi Passion Bars", detail: "Sweet-tart passionfruit curd with buttery crust" },
-      { name: "Macadamia Nut Brownies", detail: "Dark chocolate with toasted local nuts" }
-    ],
-    isPopular: false
-  }
+    _id: "3",
+    name: "Tropical Fruit Tray",
+    category: { title: "Add-ons", slug: { current: "add-ons" }, type: "both" },
+    price: "$65.00 flat rate",
+    description: "Seasonal Peak-season pineapple, papaya, mango and lychee.",
+  },
+  {
+    _id: "4",
+    name: "Custom Package",
+    category: { title: "Special", slug: { current: "special" }, type: "both" },
+    type: "info",
+    description: "Don't see what you need? Build a bespoke menu with our chefs.",
+  },
 ];
 
-export function MenuPreview() {
-  const [activeCategory, setActiveCategory] = useState(MENU_CATEGORIES[1]);
+export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
+  const displayItems = items.length > 0 ? items.slice(0, 4) : MOCK_ITEMS;
+
+  const badge = sectionData?.badge || "OUR OFFERINGS";
+  const headline = sectionData?.headline || "Authentic Island Flavors";
+  const subheadline = sectionData?.subheadline || "Explore our most popular packages and custom creations designed for your crew.";
+  const isDefaultHeadline = headline === "Authentic Island Flavors";
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring" as const, stiffness: 100, damping: 20 },
+    },
+  };
 
   return (
-    <section className="py-24 bg-cream overflow-hidden" id="menu">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-teal-base/10 text-teal-base border-teal-base/20">Starting at $12/person</Badge>
-          <p className="text-sm font-bold tracking-[0.2em] text-teal-base uppercase mb-3 px-4 py-1 inline-block border-x border-teal-base/20">
-            On the Menu
+    <section className="py-24 bg-[#F8F7F4] relative overflow-hidden" id="menu">
+      <div className="max-w-[1600px] mx-auto px-6 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+          <div className="space-y-4">
+             <Badge className="bg-teal-base/10 text-teal-base border-teal-base/20 py-1.5 px-4 font-bold tracking-wider">
+               {badge}
+             </Badge>
+             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold font-heading text-teal-dark tracking-tight leading-[1.1]">
+               {isDefaultHeadline ? (
+                 <>Authentic Island <span className="text-teal-base italic serif">Flavors</span></>
+               ) : (
+                 headline
+               )}
+             </h2>
+          </div>
+          <p className="text-xl text-brown/60 max-w-md font-medium">
+            {subheadline}
           </p>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold font-heading text-teal-dark tracking-tight">
-            Food Your Team Will Look Forward To
-          </h2>
-          <div className="mt-6 h-1 w-20 bg-orange mx-auto rounded-full"></div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* Navigation Tabs - Left */}
-          <div className="lg:col-span-4 space-y-3">
-            {MENU_CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "w-full text-left p-5 rounded-2xl border-2 transition-all duration-300 flex items-center gap-4 group relative overflow-hidden",
-                  activeCategory.id === cat.id 
-                    ? "bg-white border-teal-base shadow-md translate-x-1" 
-                    : "bg-gray-bg border-transparent hover:border-teal-base/30 grayscale-[0.5] hover:grayscale-0"
-                )}
-              >
-                <div className={cn(
-                  "p-3 rounded-xl transition-all duration-300",
-                  activeCategory.id === cat.id 
-                    ? "bg-teal-base text-white scale-110" 
-                    : "bg-white text-brown/40 group-hover:text-teal-base"
-                )}>
-                  <cat.icon className="h-6 w-6" />
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[300px]"
+        >
+          {displayItems.map((item, idx) => (
+            <motion.div
+              key={item._id}
+              variants={itemVariants}
+              className={cn(
+                "group relative rounded-[2rem] overflow-hidden transition-all duration-500",
+                idx === 0 ? "lg:col-span-2 lg:row-span-2 h-full" : "h-full",
+                idx === 1 ? "lg:col-span-2 lg:row-span-1" : "",
+                idx === 2 ? "lg:col-span-1 lg:row-span-1" : "",
+                idx === 3 ? "lg:col-span-1 lg:row-span-1" : "",
+                item.type === "info" ? "bg-white border border-gray-border/50" : "bg-teal-dark"
+              )}
+            >
+              {/* Media Context */}
+              {item.type !== "info" && (
+                <div className="absolute inset-0 w-full h-full">
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.name}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className={cn(
+                      "w-full h-full bg-gradient-to-br transition-colors duration-700",
+                      idx === 0 ? "from-teal-dark to-[#0F1D1D]" : "from-teal-dark/90 to-teal-dark"
+                    )}>
+                      {/* Subtlest watermark */}
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] scale-150 rotate-12">
+                         <Utensils className="w-96 h-96 text-white" />
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-70 transition-opacity"></div>
                 </div>
-                <div>
-                  <h3 className={cn(
-                    "font-bold text-lg transition-colors",
-                    activeCategory.id === cat.id ? "text-teal-dark" : "text-brown/60"
-                  )}>
-                    {cat.title}
-                  </h3>
-                  <p className="text-[10px] text-brown/40 uppercase tracking-widest font-bold mt-0.5">
-                    {activeCategory.id === cat.id ? "Viewing Menu" : "View Selection"}
-                  </p>
-                </div>
-                {activeCategory.id === cat.id && (
-                  <motion.div 
-                    layoutId="active-indicator"
-                    className="ml-auto"
-                  >
-                    <ChevronRight className="h-5 w-5 text-teal-base" />
-                  </motion.div>
-                )}
-              </button>
-            ))}
-          </div>
+              )}
 
-          {/* Content Area - Right */}
-          <div className="lg:col-span-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeCategory.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="bg-white rounded-[2.5rem] p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch shadow-xl border border-teal-base/5"
-              >
-                {/* Image Container */}
-                <div className="relative h-[250px] md:h-auto rounded-[2rem] overflow-hidden group shadow-lg">
-                  <Image
-                    src={activeCategory.image}
-                    alt={activeCategory.title}
-                    fill
-                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-teal-dark/60 via-transparent to-transparent opacity-60"></div>
-                  <div className="absolute bottom-6 left-6 right-6">
-                     {activeCategory.isPopular && (
-                       <Badge className="bg-orange text-white border-none text-[10px] tracking-widest px-3 py-1 mb-2 animate-bounce">
-                        MOST POPULAR
-                       </Badge>
-                     )}
-                     <p className="text-white font-heading font-bold text-2xl tracking-tight">
-                        {activeCategory.title}
-                     </p>
-                  </div>
-                </div>
+              {/* Card Content */}
+              <div className={cn(
+                "relative h-full w-full p-8 flex flex-col",
+                item.type === "info" ? "justify-between" : "justify-end"
+              )}>
+                 {item.type === "info" ? (
+                   <>
+                     <div className="space-y-6">
+                        <div className="w-12 h-12 rounded-xl bg-orange/10 flex items-center justify-center text-orange">
+                           <Utensils className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-2">
+                           <h3 className="text-2xl font-bold text-teal-dark">{item.name}</h3>
+                           <p className="text-brown/60 text-sm leading-relaxed">
+                              {item.description}
+                          </p>
+                          
+                          {item.inclusionsSummary && (
+                            <p className="text-brown/40 text-xs mt-2 italic">
+                              {item.inclusionsSummary}
+                            </p>
+                          )}
 
-                {/* Text/List Container */}
-                <div className="flex flex-col justify-center py-2">
-                  <p className="text-brown/70 leading-relaxed mb-8 text-lg font-medium">
-                    {activeCategory.description}
-                  </p>
-                  <ul className="space-y-5">
-                    {activeCategory.items.map((item, idx) => (
-                      <motion.li 
-                        key={idx} 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 + 0.2 }}
-                        className="flex flex-col group/item"
-                      >
-                        <span className="text-teal-dark font-bold text-lg flex items-center gap-2 group-hover/item:text-teal-base transition-colors">
-                          <span className="h-2 w-2 rounded-sm bg-orange rotate-45 shrink-0"></span>
-                          {item.name}
-                        </span>
-                        <span className="text-sm text-brown/50 mt-1 pl-4 leading-snug border-l border-gray-border ml-1">
-                          {item.detail}
-                        </span>
-                      </motion.li>
-                    ))}
-                  </ul>
-                  <div className="mt-10 pt-8 border-t border-gray-border/30">
-                     <Button className="w-full h-14 text-lg shadow-lg hover:shadow-teal-base/30 transition-all active:scale-[0.98]" asChild>
-                       <Link href="#book">Request This Menu</Link>
-                     </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+                          {item.selectionItems && item.selectionItems.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                              <p className="text-[10px] font-bold text-orange tracking-widest uppercase mb-1">
+                                {item.selectionTitle || "Choose from"}
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {item.selectionItems.map((opt, i) => (
+                                  <span key={i} className="text-[10px] bg-gray-100 text-brown/70 border border-gray-200 rounded-md px-2 py-0.5 whitespace-nowrap">
+                                    {opt}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                       </div>
+                     </div>
+                     <Link href="/contact" className="group/link flex items-center justify-between py-2 border-t border-gray-border/50 text-teal-base font-bold transition-colors hover:text-teal-dark">
+                        Inquire Now
+                        <MoveRight className="w-5 h-5 transition-transform group-hover/link:translate-x-1" />
+                     </Link>
+                   </>
+                 ) : (
+                   <div className="space-y-6">
+                      <div className="space-y-3">
+                         {item.badge && (
+                           <Badge className="bg-orange text-white border-none text-[9px] tracking-[0.2em] px-2.5 py-1 mb-1">
+                             {item.badge}
+                           </Badge>
+                         )}
+                         <h3 className={cn(
+                           "font-bold text-white tracking-tight",
+                           idx === 0 ? "text-3xl md:text-5xl" : "text-2xl md:text-3xl"
+                         )}>
+                            {item.name}
+                         </h3>
+                         <p className={cn(
+                           "text-white/70 leading-relaxed max-w-sm",
+                           idx === 0 ? "text-lg" : "text-sm"
+                         )}>
+                            {item.description}
+                         </p>
+                      </div>
+
+                       <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                          <div className="flex flex-col">
+                             <span className="text-white/50 text-[10px] font-bold tracking-widest uppercase mb-0.5">{item.priceTitle || "Price"}</span>
+                             <span className="text-white font-bold text-2xl tracking-tight leading-none">{item.price}</span>
+                          </div>
+                         
+                         {idx === 0 ? (
+                           <Button className="bg-white text-teal-dark hover:bg-teal-base hover:text-white rounded-full px-8 h-12 font-bold shadow-xl flex items-center gap-3">
+                              <ShoppingCart className="w-5 h-5" />
+                              Add to Order
+                           </Button>
+                         ) : idx === 1 ? (
+                           <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-teal-dark transition-all">
+                              <Plus className="w-6 h-6" />
+                           </button>
+                         ) : (
+                           <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-teal-dark rounded-xl h-10 text-xs font-bold bg-white/5 backdrop-blur-sm">
+                              Quick Add
+                           </Button>
+                         )}
+                      </div>
+                   </div>
+                 )}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Global CTA */}
+        <div className="mt-16 text-center">
+           <Button size="lg" className="h-16 px-12 text-lg bg-teal-dark hover:bg-teal-base shadow-2xl shadow-teal-dark/10 rounded-2xl group transition-all" asChild>
+             <Link href="/menu" className="flex items-center gap-3">
+               EXPLORE FULL CATERING MENU
+               <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+             </Link>
+           </Button>
         </div>
       </div>
     </section>

@@ -12,11 +12,11 @@ export function MembershipTiers() {
   const tiers = [
     {
       name: "Pro",
-      discount: "5%",
+      discount: "10%",
       subline: "Best for 3–4 events per year",
       description: "Basic savings for local businesses and community groups planning a few key events a year.",
       features: [
-        "5% off all catering orders",
+        "10% off all catering orders",
         "Dedicated account rep",
         "Priority delivery window",
       ],
@@ -24,11 +24,11 @@ export function MembershipTiers() {
     },
     {
       name: "Elite",
-      discount: "10%",
+      discount: "15%",
       subline: "Best for weekly or bi-weekly teams",
       description: "Our most popular tier. Designed for high-growth teams that value consistent, quality island flavor.",
       features: [
-        "10% off all catering orders",
+        "15% off all catering orders",
         "Dedicated account rep",
         "Priority delivery window",
         "Flexible rescheduling (48hr)",
@@ -37,11 +37,11 @@ export function MembershipTiers() {
     },
     {
       name: "Executive",
-      discount: "15%",
+      discount: "20%",
       subline: "For offices that run on Buddas",
       description: "Maximum savings and premium perks for organizations with frequent, large-scale catering needs.",
       features: [
-        "15% off all catering orders",
+        "20% off all catering orders",
         "Dedicated account rep",
         "Guaranteed availability",
         "Flexible rescheduling (24hr)",
@@ -136,7 +136,7 @@ export function MembershipTiers() {
                     variant={tier.recommended ? "primary" : "outline"} 
                     asChild
                   >
-                    <Link href={`#book?membership=${encodeURIComponent(tier.name)}`}>
+                    <Link href={`/corporate-program?tier=${tier.discount.replace('%', '')}`}>
                       {tier.recommended ? "Claim My Discount →" : `Lock In ${tier.discount} Off`}
                     </Link>
                   </Button>
@@ -163,7 +163,7 @@ export function MembershipTiers() {
             </div>
             <div className="space-y-1">
               <p className="text-brown/80 font-medium text-lg leading-snug">
-                 Avg. 40-person lunch = <span className="text-teal-dark font-bold">$500</span>. Save <span className="text-orange font-bold">$50/event</span> at 10% off.
+                 Avg. 40-person lunch = <span className="text-teal-dark font-bold">$500</span>. Save <span className="text-orange font-bold">$75/event</span> at 15% off.
               </p>
               <p className="text-sm text-brown/50 font-medium">
                 Life happens. Unused events carry over for 60 days into the next year.

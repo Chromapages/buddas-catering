@@ -2,34 +2,57 @@
 
 import { useState, useEffect } from "react";
 import { CateringCalendar } from "@/components/crm/CateringCalendar";
-import { getAllCateringRequests } from "@/lib/firebase/services/crm";
+import { getAllCateringRequests, getSalesReps } from "@/lib/firebase/services/crm";
 import { useAuth } from "@/lib/firebase/context/auth";
-import { CateringRequest } from "@/types/crm";
 import { Button } from "@/components/shared/Button";
 import Link from "next/link";
-import { Calendar as CalendarIcon, Filter, Plus } from "lucide-react";
+import { Filter, Plus, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/shared/DropdownMenu";
 
 export default function CalendarPage() {
   const { user, role } = useAuth();
   const [requests, setRequests] = useState<any[]>([]);
+  const [reps, setReps] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [repFilter, setRepFilter] = useState<string>("All");
 
   useEffect(() => {
     if (!user || !role) return;
 
-    const fetchRequests = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getAllCateringRequests(user.uid, role);
-        setRequests(data);
+        const [requestsData, repsData] = await Promise.all([
+          getAllCateringRequests(user.uid, role),
+          getSalesReps()
+        ]);
+        setRequests(requestsData);
+        setReps(repsData);
       } catch (error) {
-        console.error("Error fetching requests for calendar:", error);
+        console.error("Error fetching data for calendar:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRequests();
+    fetchData();
   }, [user, role]);
+
+  const filteredRequests = requests.filter(req => {
+    const matchesStatus = statusFilter === "All" || req.fulfillmentStatus === statusFilter;
+    const matchesRep = repFilter === "All" || req.assignedRepId === repFilter;
+    return matchesStatus && matchesRep;
+  });
 
   return (
     <div className="p-6 lg:p-8 space-y-8 h-full flex flex-col">
@@ -41,10 +64,40 @@ export default function CalendarPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex">
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Status Filter</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                {["All", "Pending", "Confirmed", "In Progress", "Fulfilled", "Cancelled"].map(s => (
+                  <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)}>
+                    {s}
+                    {statusFilter === s && <Check className="ml-auto w-4 h-4" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Sales Rep Filter</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setRepFilter("All")}>
+                  All Reps
+                  {repFilter === "All" && <Check className="ml-auto w-4 h-4" />}
+                </DropdownMenuItem>
+                {Object.entries(reps).map(([id, name]) => (
+                  <DropdownMenuItem key={id} onClick={() => setRepFilter(id)}>
+                    {name}
+                    {repFilter === id && <Check className="ml-auto w-4 h-4" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button asChild size="sm">
             <Link href="/app/requests">
               <Plus className="w-4 h-4 mr-2" />
@@ -60,7 +113,7 @@ export default function CalendarPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-base"></div>
           </div>
         ) : (
-          <CateringCalendar requests={requests} />
+          <CateringCalendar requests={filteredRequests} reps={reps} />
         )}
       </div>
     </div>

@@ -4,14 +4,24 @@ import { Calendar, Users, FileText, CheckCircle2, DollarSign, Clock, Loader2, Ch
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
+import { StatusTimeline } from "@/components/crm/StatusTimeline";
 import Link from "next/link";
-import { getCateringRequestById, submitForApproval } from "@/lib/firebase/services/crm";
-import { useEffect, useState } from "react";
+import { 
+    getCateringRequestById, 
+    submitForApproval, 
+    processInvoice,
+    processPayment,
+    cancelCateringRequest 
+} from "@/lib/firebase/services/crm";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
+import { useEffect, useState, use } from "react";
 import { format } from "date-fns";
 import { useAuth } from "@/lib/firebase/context/auth";
 import { toast } from "react-hot-toast";
 
-export default function RequestDetailPage({ params }: { params: { id: string } }) {
+export default function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const { user } = useAuth();
   const [request, setRequest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -19,18 +29,28 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
-    const fetchRequest = async () => {
+    const fetchRequestAndStatus = async () => {
       try {
-        const data = await getCateringRequestById(params.id);
+        const data = await getCateringRequestById(id);
         setRequest(data);
+        
+        // Persist submission state by checking Firestore
+        const q = query(
+          collection(db, "commission_approvals"), 
+          where("cateringRequestId", "==", id)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          setHasSubmitted(true);
+        }
       } catch (error) {
-        console.error("Error fetching request:", error);
+        console.error("Error fetching request details:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchRequest();
-  }, [params.id]);
+    fetchRequestAndStatus();
+  }, [id]);
 
   const handleSubmitForApproval = async () => {
     if (!request || !user) return;
@@ -54,6 +74,51 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
     } catch (error) {
       console.error("Error submitting for approval:", error);
       toast.error("Failed to submit request. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleProcessInvoice = async () => {
+    if (!request || !user) return;
+    setIsSubmitting(true);
+    try {
+      await processInvoice(request.id, user.uid, user.displayName || "Admin");
+      setRequest({ ...request, fulfillmentStatus: 'Invoiced' });
+      toast.success("Order marked as Invoiced.");
+    } catch (error) {
+      console.error("Error processing invoice:", error);
+      toast.error("Failed to process invoice.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    if (!request || !user) return;
+    setIsSubmitting(true);
+    try {
+      await processPayment(request.id, user.uid, user.displayName || "Admin");
+      setRequest({ ...request, fulfillmentStatus: 'Paid' });
+      toast.success("Order marked as Paid! Commission/Membership updated.");
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      toast.error("Failed to process payment.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!request || !user || !confirm("Are you sure you want to cancel this order? This will rollback any membership credits.")) return;
+    setIsSubmitting(true);
+    try {
+      await cancelCateringRequest(request.id, user.uid, user.displayName || "Admin");
+      setRequest({ ...request, fulfillmentStatus: 'Cancelled' });
+      toast.success("Order Cancelled and credits rolled back.");
+    } catch (error) {
+      console.error("Error cancelling request:", error);
+      toast.error("Failed to cancel request.");
     } finally {
       setIsSubmitting(false);
     }
@@ -86,7 +151,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold font-heading text-teal-dark font-mono uppercase tracking-tight">Request #{request.id.slice(-6)}</h1>
             <Badge variant={
-              request.fulfillmentStatus === "Fulfilled" ? "success" : 
+              request.fulfillmentStatus === "Fulfilled" || request.fulfillmentStatus === "Invoiced" || request.fulfillmentStatus === "Paid" ? "success" : 
               request.fulfillmentStatus === "Cancelled" ? "danger" : 
               request.fulfillmentStatus === "In Progress" ? "neutral" : "warning"
             }>
@@ -97,9 +162,37 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
             for <Link href={`/app/companies/${request.companyId}`} className="font-semibold text-teal-base hover:text-teal-dark truncate max-w-[200px]">{request.companyName || "Unknown Company"}</Link>
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline">Edit Request</Button>
-          <Button>Process Invoice</Button>
+        <div className="flex flex-wrap gap-3">
+          {request.fulfillmentStatus !== 'Cancelled' && request.fulfillmentStatus !== 'Paid' && (
+            <Button variant="outline" onClick={handleCancelRequest} disabled={isSubmitting} className="text-red-600 hover:bg-red-50 border-red-200">
+              Cancel Order
+            </Button>
+          )}
+          
+          {request.fulfillmentStatus === 'Fulfilled' && (
+             <Button 
+                onClick={handleProcessInvoice}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Process Invoice"}
+              </Button>
+          )}
+
+          {request.fulfillmentStatus === 'Invoiced' && (
+             <Button 
+                onClick={handleProcessPayment}
+                disabled={isSubmitting}
+                className="bg-teal-dark hover:bg-teal-900"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Mark as Paid"}
+              </Button>
+          )}
+          
+          {request.fulfillmentStatus === 'Paid' && (
+              <Badge variant="success" className="h-10 px-4 text-sm gap-2">
+                <CheckCircle2 className="w-4 h-4" /> Fully Paid
+              </Badge>
+          )}
         </div>
       </div>
 
@@ -158,7 +251,11 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-brown/60">Commission Eligible</span>
-                <Badge variant="success">Yes</Badge>
+                {(request.quoteAmount || 0) >= 200 && request.assignedRepId ? (
+                   <Badge variant="success">Yes</Badge>
+                ) : (
+                   <Badge variant="neutral">No</Badge>
+                )}
               </div>
               
               <div className="pt-4">
@@ -171,19 +268,21 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                   <Button 
                     className="w-full shadow-md" 
                     onClick={handleSubmitForApproval}
-                    disabled={isSubmitting || request.fulfillmentStatus !== 'Completed'}
-                    title={request.fulfillmentStatus !== 'Completed' ? "Request must be 'Completed' to submit for commission" : ""}
+                    disabled={isSubmitting || request.fulfillmentStatus !== 'Paid' || hasSubmitted}
+                    title={request.fulfillmentStatus !== 'Paid' ? "Order must be 'Paid' to submit for commission" : ""}
                   >
                     {isSubmitting ? (
                       <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</>
+                    ) : hasSubmitted ? (
+                        "Submitted"
                     ) : (
                       "Submit for Commission"
                     )}
                   </Button>
                 )}
-                {request.fulfillmentStatus !== 'Completed' && !hasSubmitted && (
+                {request.fulfillmentStatus !== 'Paid' && !hasSubmitted && (
                   <p className="text-[10px] text-brown/50 text-center mt-2 italic">
-                    * Available after event completion
+                    * Available after payment clearance
                   </p>
                 )}
               </div>
@@ -191,6 +290,26 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
           </Card>
         </div>
       </div>
+
+      {/* Activity Timeline */}
+      <Card className="shadow-sm border-gray-border/60">
+        <CardHeader className="bg-gray-bg/20 border-b border-gray-border/50">
+          <CardTitle className="text-teal-dark">Request History</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <StatusTimeline
+            entityType="REQUEST"
+            entityId={id}
+            seedEvents={[
+              {
+                label: `Request created`,
+                timestamp: request.createdAt?.seconds ? request.createdAt.seconds * 1000 : undefined,
+                color: "bg-orange",
+              },
+            ]}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

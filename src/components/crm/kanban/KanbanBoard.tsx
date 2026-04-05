@@ -36,7 +36,8 @@ const COLUMNS: { id: LeadStatus; title: string }[] = [
   { id: "New", title: "New Intake" },
   { id: "Contacted", title: "Contacted" },
   { id: "Quote Sent", title: "Quote Sent" },
-  { id: "Approved", title: "Approved" },
+  { id: "Approved", title: "Converted" },
+  { id: "Lost", title: "Closed/Lost" },
 ];
 
 export const KanbanBoard = ({ initialLeads }: KanbanBoardProps) => {

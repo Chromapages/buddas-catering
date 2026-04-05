@@ -15,30 +15,60 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/shared/Input";
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
-import { getAllCompanies } from "@/lib/firebase/services/crm";
+import { getAllCommitments, getAllCompanies, getCompaniesByHealthState } from "@/lib/firebase/services/crm";
+import { AddCompanyModal } from "@/components/crm/AddCompanyModal";
+import { useAuth } from "@/lib/firebase/context/auth";
+import { Commitment, Company } from "@/types/crm";
 
 type SortField = "name" | "industry" | "events" | "date";
 type SortOrder = "asc" | "desc";
+type HealthFilter = "All" | "Expiring Soon" | "No First Order" | "Lapsed";
+type CompanyRow = Company & { industry?: string; totalEventsCompleted?: number };
 
 const COMPANY_TYPES = ["All", "Corporate", "Non-Profit", "Government", "Education", "Other"];
+const HEALTH_FILTERS: HealthFilter[] = ["All", "Expiring Soon", "No First Order", "Lapsed"];
 
 export default function CompaniesPage() {
   const router = useRouter();
-  const [companies, setCompanies] = useState<any[]>([]);
+  const { user, role } = useAuth();
+  const [companies, setCompanies] = useState<CompanyRow[]>([]);
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
+  const [healthFilter, setHealthFilter] = useState<HealthFilter>("All");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchCompanies = async () => {
       setLoading(true);
       try {
-        const data = await getAllCompanies();
-        setCompanies(data);
+        if (role === "rep" && user?.uid && healthFilter !== "All") {
+          const state =
+            healthFilter === "Expiring Soon"
+              ? "expiring"
+              : healthFilter === "No First Order"
+                ? "no-first-order"
+                : "lapsed";
+          const [data, commitmentsData] = await Promise.all([
+            getCompaniesByHealthState(user.uid, state),
+            getAllCommitments(),
+          ]);
+          setCompanies(data);
+          setCommitments(commitmentsData);
+        } else {
+          const [data, commitmentsData] = await Promise.all([
+            getAllCompanies(user?.uid, role || undefined),
+            getAllCommitments(),
+          ]);
+          setCompanies(data);
+          setCommitments(commitmentsData);
+        }
       } catch (error) {
         console.error("Error fetching companies:", error);
       } finally {
@@ -46,7 +76,41 @@ export default function CompaniesPage() {
       }
     };
     fetchCompanies();
-  }, []);
+  }, [refreshKey, healthFilter, role, user?.uid]);
+
+  const companyMatchesHealthFilter = (company: CompanyRow) => {
+    if (healthFilter === "All") return true;
+
+    const commitment = commitments.find(
+      (entry) =>
+        entry.companyId === company.id &&
+        (entry.active || company.activeCommitmentId === entry.id || company.activeMembershipId === entry.id)
+    );
+
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+    const sixtyDaysFromNow = new Date(now);
+    sixtyDaysFromNow.setDate(now.getDate() + 60);
+    const renewalDate = commitment?.endDate?.toDate?.() || commitment?.renewalDate?.toDate?.();
+    const createdAt = company.createdAt?.toDate?.();
+
+    if (healthFilter === "No First Order") {
+      return Boolean(createdAt && createdAt <= sevenDaysAgo && company.firstOrderPlaced === false);
+    }
+
+    if (!commitment || !renewalDate) return false;
+
+    if (healthFilter === "Expiring Soon") {
+      return commitment.status !== "Lapsed" && renewalDate >= now && renewalDate <= sixtyDaysFromNow;
+    }
+
+    if (healthFilter === "Lapsed") {
+      return commitment.status === "Lapsed" || renewalDate < now;
+    }
+
+    return true;
+  };
 
   const filteredCompanies = companies.filter(company => {
     const matchesSearch =
@@ -54,7 +118,8 @@ export default function CompaniesPage() {
       (company.industry || "").toLowerCase().includes(search.toLowerCase()) ||
       (company.website || "").toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === "All" || company.companyType === typeFilter;
-    return matchesSearch && matchesType;
+    const matchesHealth = companyMatchesHealthFilter(company);
+    return matchesSearch && matchesType && matchesHealth;
   });
 
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
@@ -98,7 +163,7 @@ export default function CompaniesPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 flex flex-col h-full">
+    <div className="flex h-full flex-col overscroll-y-contain p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold font-heading text-teal-dark">Companies</h1>
@@ -106,8 +171,29 @@ export default function CompaniesPage() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline">Export CSV</Button>
-          <Button>Add Company</Button>
+          <Button onClick={() => setIsAddModalOpen(true)}>Add Company</Button>
         </div>
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        {HEALTH_FILTERS.map((filter) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => {
+              setHealthFilter(filter);
+              setCurrentPage(1);
+            }}
+            className={`min-h-[44px] rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+              healthFilter === filter
+                ? "border-teal-base bg-teal-base/10 text-teal-dark"
+                : "border-gray-border bg-white text-brown/60 hover:border-teal-base/30"
+            }`}
+            style={{ touchAction: "manipulation" }}
+          >
+            {filter}
+          </button>
+        ))}
       </div>
 
       {/* Filters Bar */}
@@ -201,7 +287,9 @@ export default function CompaniesPage() {
                     </td>
                     <td className="px-6 py-4 text-brown/70">{company.industry || "—"}</td>
                     <td className="px-6 py-4 text-brown/70">{company.companyType || "—"}</td>
-                    <td className="px-6 py-4">{getMembershipBadge(company.activeMembershipId)}</td>
+                    <td className="px-6 py-4">
+                      {healthFilter === "Expiring Soon" ? <Badge variant="warning">Renewal Soon</Badge> : getMembershipBadge(company.activeMembershipId)}
+                    </td>
                     <td className="px-6 py-4 font-medium">{company.totalEventsCompleted ?? 0}</td>
                     <td className="px-6 py-4 text-brown/70">
                       {company.createdAt?.seconds
@@ -260,6 +348,12 @@ export default function CompaniesPage() {
           </div>
         </div>
       </div>
+
+      <AddCompanyModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={() => setRefreshKey(prev => prev + 1)} 
+      />
     </div>
   );
 }

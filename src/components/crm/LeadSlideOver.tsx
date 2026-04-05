@@ -1,29 +1,219 @@
-import { X, Calendar, Users, FileText, CheckCircle2, ChevronDown, Mail, Phone, Building2 } from "lucide-react";
+import { X, Calendar, Users, FileText, CheckCircle2, ChevronDown, Mail, Phone, Building2, MessageSquare, Zap, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
 import { format } from "date-fns";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { cn, formatDate } from "@/lib/utils";
+import { useAuth } from "@/lib/firebase/context/auth";
+import { updateLeadStatus, convertLeadToCompany, convertLeadToOrder, updateLead } from "@/lib/firebase/services/lead.service";
+import { createNote } from "@/lib/firebase/services/note.service";
+import { getActivitiesByEntity } from "@/lib/firebase/services/base";
+import { toast } from "react-hot-toast";
+import { Input } from "@/components/shared/Input";
+import { ActivityLog } from "@/components/crm/ActivityLog";
+import { sendEmail, sendSMS } from "@/lib/utils/notifications";
+import { Textarea } from "@/components/shared/Textarea"; // Assuming this exists or using a raw textarea
 
 interface LeadSlideOverProps {
   isOpen: boolean;
   onClose: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lead: Record<string, any> | null; 
+  onSuccess?: () => void;
 }
 
-const STATUSES = ["New", "Contacted", "Quote Sent", "Approved", "Lost"];
+const STATUSES = ["New", "Contacted", "Quote Sent", "Approved", "Won", "Lost"];
 
-export function LeadSlideOver({ isOpen, onClose, lead }: LeadSlideOverProps) {
+export function LeadSlideOver({ isOpen, onClose, lead, onSuccess }: LeadSlideOverProps) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [currentStatus, setCurrentStatus] = useState(lead?.status || "New");
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [noteContent, setNoteContent] = useState("");
+  const [followUpDate, setFollowUpDate] = useState(lead?.followUpDate || "");
+  const [isWaitlist, setIsWaitlist] = useState(lead?.isWaitlist || false);
+  const [outreachMode, setOutreachMode] = useState<"none" | "sms" | "email">("none");
+  const [outreachContent, setOutreachContent] = useState("");
+  const [isSendingOutreach, setIsSendingOutreach] = useState(false);
+
+  useEffect(() => {
+    if (lead) {
+      setCurrentStatus(lead.status || "New");
+      setFollowUpDate(lead.followUpDate || "");
+      setIsWaitlist(lead.isWaitlist || false);
+      fetchActivities();
+    }
+  }, [lead]);
+
+  const fetchActivities = async () => {
+    if (!lead?.id) return;
+    const data = await getActivitiesByEntity("LEAD", lead.id);
+    setActivities(data);
+  };
 
   if (!isOpen || !lead) return null;
 
   const handleStatusChange = (newStatus: string) => {
     setCurrentStatus(newStatus);
     setIsStatusOpen(false);
-    // In a real app, this would trigger a Firestore update and Activity Log entry
+  };
+
+  const handleSave = async () => {
+    if (!lead || !user) return;
+    
+    // If no change, just close
+    if (currentStatus === lead.status) {
+      onClose();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await updateLeadStatus(
+        lead.id,
+        currentStatus as any,
+        lead.status,
+        user.uid,
+        user.displayName || "User"
+      );
+      toast.success("Status updated!");
+      onSuccess?.();
+      onClose();
+      // Note: The parent LeadsPage should ideally refresh its data 
+      // via the query cache or a refetch callback if we wanted immediate UI update 
+      // without a full page refresh outside this component.
+    } catch (error) {
+      console.error("Save error:", error);
+      toast.error("Failed to update status");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConvertToCompany = async () => {
+    if (!lead || !user) return;
+    setIsSubmitting(true);
+    try {
+      await convertLeadToCompany(lead as any, user.uid, user.displayName || "User");
+      toast.success("Lead converted to Account!");
+      onSuccess?.();
+    } catch (error) {
+      console.error("Conversion error:", error);
+      toast.error("Failed to convert lead");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConvertToOrder = async () => {
+    if (!lead || !user) return;
+    setIsSubmitting(true);
+    try {
+      const orderId = await convertLeadToOrder(lead as any, user.uid, user.displayName || "User");
+      toast.success("Lead converted to Order!");
+      onSuccess?.();
+      onClose();
+      router.push(`/app/orders/${orderId}`);
+    } catch (error) {
+      console.error("Conversion error:", error);
+      toast.error("Failed to convert lead to order");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!lead || !user || !noteContent.trim()) return;
+    setIsSubmitting(true);
+    try {
+      await createNote({
+        entityType: "LEAD",
+        entityId: lead.id,
+        content: noteContent,
+        authorId: user.uid,
+        authorName: user.displayName || "User"
+      });
+      toast.success("Note added");
+      setNoteContent("");
+      await fetchActivities();
+    } catch (error) {
+      toast.error("Failed to add note");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFollowUpChange = async (date: string) => {
+    if (!lead) return;
+    setFollowUpDate(date);
+    try {
+      await updateLead(lead.id, { followUpDate: date });
+      toast.success("Follow-up date updated");
+      await fetchActivities();
+    } catch (error) {
+      toast.error("Failed to update follow-up date");
+    }
+  };
+
+  const handleWaitlistToggle = async (checked: boolean) => {
+    if (!lead) return;
+    setIsWaitlist(checked);
+    try {
+      await updateLead(lead.id, { isWaitlist: checked });
+      toast.success(checked ? "Added to waitlist" : "Removed from waitlist");
+      await fetchActivities();
+      onSuccess?.();
+    } catch (error) {
+      toast.error("Failed to update waitlist status");
+      setIsWaitlist(!checked); // Rollback
+    }
+  };
+
+  const handleSendOutreach = async () => {
+    if (!lead || !outreachContent.trim() || !user) return;
+    
+    setIsSendingOutreach(true);
+    try {
+      if (outreachMode === "sms") {
+        if (!lead.phone) {
+          toast.error("Lead has no phone number");
+          return;
+        }
+        await sendSMS({ to: lead.phone, body: outreachContent });
+        toast.success("SMS sent!");
+      } else {
+        await sendEmail({ 
+          to: lead.email, 
+          subject: "Follow-up: Buddas Hawaiian Catering", 
+          message: outreachContent 
+        });
+        toast.success("Email sent!");
+      }
+
+      // Log the activity
+      await createNote({
+        entityType: "LEAD",
+        entityId: lead.id,
+        content: `Sent ${outreachMode.toUpperCase()}: ${outreachContent}`,
+        authorId: user.uid,
+        authorName: user.displayName || "User"
+      });
+
+      setOutreachContent("");
+      setOutreachMode("none");
+      await fetchActivities();
+    } catch (error) {
+      toast.error(`Failed to send ${outreachMode}`);
+    } finally {
+      setIsSendingOutreach(false);
+    }
+  };
+
+  const applyTemplate = (content: string) => {
+    setOutreachContent(content.replace("{{name}}", lead.contactName || "there"));
   };
 
   const getStatusBadge = (status: string) => {
@@ -56,9 +246,7 @@ export function LeadSlideOver({ isOpen, onClose, lead }: LeadSlideOverProps) {
               <span className="text-sm font-medium text-brown/70">{lead.contactName || lead.email}</span>
               <span className="text-gray-border">•</span>
               <span className="text-sm text-brown/50">
-                Created {lead.createdAt?.seconds 
-                  ? format(lead.createdAt.seconds * 1000, "MMM d")
-                  : "Recently"}
+                Created {formatDate(lead.createdAt, "MMM d")}
               </span>
             </div>
           </div>
@@ -111,8 +299,74 @@ export function LeadSlideOver({ isOpen, onClose, lead }: LeadSlideOverProps) {
             </div>
           </div>
 
+          {/* Quick Outreach Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-brown/70 uppercase tracking-wider">Quick Outreach</h3>
+              <Zap className="h-4 w-4 text-orange animate-pulse" />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={cn("flex-1 gap-2", outreachMode === "sms" && "bg-teal-base/10 border-teal-base text-teal-dark")}
+                onClick={() => setOutreachMode(outreachMode === "sms" ? "none" : "sms")}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                SMS Lead
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={cn("flex-1 gap-2", outreachMode === "email" && "bg-teal-base/10 border-teal-base text-teal-dark")}
+                onClick={() => setOutreachMode(outreachMode === "email" ? "none" : "email")}
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Email Lead
+              </Button>
+            </div>
+
+            {outreachMode !== "none" && (
+              <div className="bg-gray-bg rounded-xl p-4 border border-teal-base/20 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                <div className="flex gap-2 pb-2 border-b border-gray-border/50">
+                  <button 
+                    onClick={() => applyTemplate("Aloha {{name}}! Just checking in to see if you have any questions about the 🥙 catering options we discussed. Let me know!")}
+                    className="text-[10px] bg-white border border-gray-border px-2 py-1 rounded hover:border-teal-base transition-colors"
+                  >
+                    Quick Check-in
+                  </button>
+                  <button 
+                    onClick={() => applyTemplate("Hi {{name}}, I've sent over your custom quote for the Buddas Catering event. Please let me know if you need any adjustments! 🌺")}
+                    className="text-[10px] bg-white border border-gray-border px-2 py-1 rounded hover:border-teal-base transition-colors"
+                  >
+                    Quote Follow-up
+                  </button>
+                </div>
+                <textarea
+                  className="w-full bg-white border border-gray-border rounded-lg p-3 text-sm min-h-[100px] focus:ring-teal-base focus:border-teal-base outline-none resize-none"
+                  placeholder={`Type your ${outreachMode} message...`}
+                  value={outreachContent}
+                  onChange={(e) => setOutreachContent(e.target.value)}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setOutreachMode("none")}>Cancel</Button>
+                  <Button 
+                    size="sm" 
+                    className="gap-2" 
+                    onClick={handleSendOutreach}
+                    disabled={isSendingOutreach || !outreachContent.trim()}
+                  >
+                    {isSendingOutreach ? "Sending..." : "Send Now"}
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Details Section */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-brown/70 uppercase tracking-wider border-b border-gray-border pb-2">Contact Info</h3>
               <div className="space-y-3">
@@ -142,9 +396,26 @@ export function LeadSlideOver({ isOpen, onClose, lead }: LeadSlideOverProps) {
                   <Users className="h-4 w-4 text-brown/40 mt-0.5" />
                   <span className="text-brown">{lead.estimatedGroupSize || 0} people <span className="text-brown/50">(Est. ${(lead.estimatedGroupSize || 0) * 25})</span></span>
                 </div>
-                <div className="flex items-start gap-3 text-sm">
-                  <FileText className="h-4 w-4 text-brown/40 mt-0.5" />
-                  <span className="text-brown italic line-clamp-3">&quot;{lead.notes || "No additional details provided."}&quot;</span>
+                <div className="flex flex-col gap-2">
+                   <span className="text-xs font-bold text-brown/40 uppercase tracking-widest">Next Follow-Up</span>
+                   <input 
+                     type="date" 
+                     className="text-sm border-gray-border rounded-lg bg-gray-bg focus:ring-teal-base focus:border-teal-base p-2"
+                     value={followUpDate}
+                     onChange={(e) => handleFollowUpChange(e.target.value)}
+                   />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-bg rounded-lg border border-gray-border mt-2">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-brown">Waitlist</span>
+                    <span className="text-[10px] text-brown/50 uppercase">Mark as low priority</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    className="h-5 w-5 rounded border-gray-border text-teal-base focus:ring-teal-base cursor-pointer"
+                    checked={isWaitlist}
+                    onChange={(e) => handleWaitlistToggle(e.target.checked)}
+                  />
                 </div>
               </div>
             </div>
@@ -154,43 +425,87 @@ export function LeadSlideOver({ isOpen, onClose, lead }: LeadSlideOverProps) {
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-brown/70 uppercase tracking-wider border-b border-gray-border pb-2 mb-4">Activity Timeline</h3>
             <div className="space-y-6">
-              {currentStatus !== "New" && (
-                <div className="relative pl-6 border-l-2 border-gray-border/50 pb-2">
-                  <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-teal-base border-2 border-white"></div>
-                  <p className="text-sm font-medium text-brown">Status changed to {currentStatus}</p>
-                  <p className="text-xs text-brown/50 mt-1">Just now by You</p>
+              {activities.length > 0 ? (
+                activities.map((activity, idx) => (
+                  <div key={activity.id || idx} className="relative pl-6 border-l-2 border-gray-border/50 pb-2 last:border-l-transparent">
+                    <div className={cn(
+                      "absolute -left-[9px] top-0 h-4 w-4 rounded-full border-2 border-white",
+                      activity.actionType === "STATUS_CHANGE" ? "bg-teal-base" :
+                      activity.actionType === "LEAD_CONVERTED" ? "bg-orange" :
+                      activity.actionType === "REP_ASSIGNED" ? "bg-blue-400" :
+                      "bg-gray-400"
+                    )}></div>
+                    <p className="text-sm font-medium text-brown">
+                      {activity.actionType === "STATUS_CHANGE" && `Status changed to ${activity.data?.to}`}
+                      {activity.actionType === "LEAD_CONVERTED" && `Converted to ${activity.data?.requestId ? "Order" : "Account"}`}
+                      {activity.actionType === "REP_ASSIGNED" && `Assigned to ${activity.data?.repName}`}
+                      {activity.actionType === "BATCH_UPDATE" && "Batch updated"}
+                      {activity.actionType === "CONVERTED_TO_ACCOUNT" && "Converted to Account"}
+                      {activity.actionType === "NOTE" && activity.data?.content}
+                    </p>
+                    <p className="text-xs text-brown/50 mt-1">
+                      {formatDate(activity.createdAt, "MMM d, h:mm a")} by {activity.actorName} {activity.actionType === "NOTE" && "• Note"}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="relative pl-6 border-l-2 border-transparent pb-2">
+                  <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-gray-200 border-2 border-white"></div>
+                  <p className="text-sm font-medium text-brown/50 italic">No activity logged yet.</p>
+                  <p className="text-xs text-brown/50 mt-1">
+                    Created {formatDate(lead.createdAt, "MMM d, h:mm a")}
+                  </p>
                 </div>
               )}
-              <div className="relative pl-6 border-l-2 border-transparent pb-2">
-                <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-orange border-2 border-white"></div>
-                <p className="text-sm font-medium text-brown">Lead Created</p>
-                <p className="text-xs text-brown/50 mt-1">Attribution: {lead.utm_campaign || "Direct / Referral"}</p>
-                <p className="text-xs text-brown/40 mt-1">
-                  {lead.createdAt?.seconds 
-                    ? format(lead.createdAt.seconds * 1000, "MMM d, h:mm a")
-                    : "Recently"}
-                </p>
-              </div>
             </div>
             
             <div className="pt-4">
-               <textarea 
-                 rows={3} 
-                 className="w-full text-sm rounded-lg border-gray-border focus:border-teal-base focus:ring-teal-base placeholder:text-brown/40 p-3"
-                 placeholder="Add an internal note or log a call..."
-               />
-               <div className="mt-2 flex justify-end">
-                 <Button size="sm">Log Note</Button>
-               </div>
+              <ActivityLog 
+                entityId={lead.id} 
+                entityType="LEAD" 
+                entityName={lead.companyName || lead.contactName || "Lead"} 
+                onSuccess={() => {
+                  fetchActivities();
+                  onSuccess?.();
+                }} 
+              />
             </div>
           </div>
 
         </div>
         
         {/* Footer Actions */}
-        <div className="border-t border-gray-border p-4 bg-gray-50 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>Close</Button>
-          <Button>Save Changes</Button>
+        <div className="border-t border-gray-border p-4 bg-gray-50 flex items-center justify-between gap-3">
+          <div className="flex gap-2">
+            {!lead.companyId && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-teal-base border-teal-base hover:bg-teal-base/5"
+                onClick={handleConvertToCompany}
+                disabled={isSubmitting}
+              >
+                Convert to Account
+              </Button>
+            )}
+            {!lead.cateringRequestId && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="bg-teal-base text-white hover:bg-teal-dark border-teal-base"
+                onClick={handleConvertToOrder}
+                disabled={isSubmitting}
+              >
+                Convert to Order
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose} disabled={isSubmitting}>Close</Button>
+            <Button size="sm" onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </div>
       </div>
     </>

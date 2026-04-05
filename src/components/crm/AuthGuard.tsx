@@ -9,14 +9,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    // If not loading and no user, redirect to login
-    if (!loading && !user) {
-      // Store the URL they were trying to access to redirect back after login
-      const returnUrl = encodeURIComponent(pathname);
-      router.push(`/login?returnUrl=${returnUrl}`);
-    }
-  }, [user, loading, router, pathname]);
+  // Redirection is now handled server-side via proxy.ts/middleware.
+  // This component remains to handle the client-side initialization state
+  // and ensure the user context is populated before rendering protected UI.
 
   // Show a loading state while checking authentication
   if (loading) {

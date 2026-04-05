@@ -9,8 +9,10 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/shared/Input";
 import { Select } from "@/components/shared/Select";
+import { Textarea } from "@/components/shared/Textarea";
 import { Button } from "@/components/shared/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
+import { useAuth } from "@/lib/firebase/context/auth";
 import toast from "react-hot-toast";
 
 const newLeadSchema = z.object({
@@ -46,6 +48,7 @@ const SOURCE_OPTIONS = [
 
 export default function NewLeadPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -74,6 +77,8 @@ export default function NewLeadPage() {
           refCode: "",
           landingPageSlug: "",
           referringUrl: "",
+          assignedRepId: user?.uid || "",
+          assignedRepName: user?.displayName || user?.email || "Rep",
         }),
       });
 
@@ -209,15 +214,12 @@ export default function NewLeadPage() {
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-brown mb-1">Notes</label>
-              <textarea
+              <Textarea
                 {...register("notes")}
                 rows={3}
                 placeholder="Any additional details about the request..."
-                className="flex w-full rounded-lg border border-gray-border bg-white px-3 py-2 text-sm text-brown placeholder:text-brown/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-base focus-visible:border-teal-base transition-colors resize-none"
+                error={errors.notes?.message}
               />
-              {errors.notes && (
-                <span className="text-xs text-orange font-medium">{errors.notes.message}</span>
-              )}
             </div>
           </CardContent>
         </Card>
