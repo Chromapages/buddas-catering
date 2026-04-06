@@ -152,7 +152,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
               <div className="flex items-center justify-between mb-10 px-2">
                 <div className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => step > 1 && setStep(1)}>
                   <div className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
+                    "h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
                     step >= 1 ? "bg-teal-dark border-teal-dark text-white shadow-md shadow-teal-dark/20" : "bg-white border-gray-border text-brown/40"
                   )}>
                     {step > 1 ? <Check className="h-5 w-5" /> : "1"}
@@ -162,7 +162,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
                 <div className={cn("h-px flex-1 mx-2 md:mx-4 transition-colors", step > 1 ? "bg-teal-dark" : "bg-gray-border")}></div>
                 <div className="flex flex-col items-center gap-2">
                   <div className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
+                    "h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
                     step === 2 ? "bg-teal-dark border-teal-dark text-white shadow-md shadow-teal-dark/20" : "bg-white border-gray-border text-brown/40"
                   )}>
                     2

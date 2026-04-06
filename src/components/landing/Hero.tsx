@@ -87,7 +87,7 @@ export function Hero({ data }: HeroProps) {
 
       <div className="container-rig relative z-10">
         <motion.div 
-          className="max-w-2xl bg-white/5 backdrop-blur-md border border-white/20 p-8 md:p-12 rounded-[2.5rem] shadow-2xl"
+          className="max-w-2xl bg-white/5 backdrop-blur-md border border-white/20 p-6 md:p-12 rounded-[2.5rem] shadow-2xl"
           variants={containerVariants}
           initial="hidden"
           animate="visible"

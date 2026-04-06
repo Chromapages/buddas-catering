@@ -34,25 +34,25 @@ export async function Footer() {
           
           <div>
             <h4 className="font-semibold mb-4 text-teal-dark">Menu</h4>
-            <ul className="space-y-2 text-sm text-brown/70">
-              <li><Link href="#menu" className="hover:text-teal-base transition-colors">Breakfast & Meetings</Link></li>
-              <li><Link href="#menu" className="hover:text-teal-base transition-colors">All-Hands Lunch</Link></li>
-              <li><Link href="#menu" className="hover:text-teal-base transition-colors">Pastries & Rolls</Link></li>
-              <li><Link href="#memberships" className="hover:text-gold transition-colors">Corporate Memberships</Link></li>
+            <ul className="space-y-1 md:space-y-2 text-sm text-brown/70">
+              <li><Link href="#menu" className="block py-2 hover:text-teal-base transition-colors">Breakfast & Meetings</Link></li>
+              <li><Link href="#menu" className="block py-2 hover:text-teal-base transition-colors">All-Hands Lunch</Link></li>
+              <li><Link href="#menu" className="block py-2 hover:text-teal-base transition-colors">Pastries & Rolls</Link></li>
+              <li><Link href="#memberships" className="block py-2 hover:text-gold transition-colors">Corporate Memberships</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4 text-teal-dark">Company</h4>
-            <ul className="space-y-2 text-sm text-brown/70">
-              <li><Link href="#faq" className="hover:text-teal-base transition-colors">FAQ</Link></li>
-              <li><Link href="/privacy" className="hover:text-teal-base transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-teal-base transition-colors">Terms of Service</Link></li>
-              <li><Link href="/login" className="hover:text-teal-base transition-colors underline decoration-teal-base/20 underline-offset-4 font-medium text-brown/90">Team Login</Link></li>
-              <li><span>Pleasant Grove, UT</span></li>
+            <ul className="space-y-1 md:space-y-2 text-sm text-brown/70">
+              <li><Link href="#faq" className="block py-2 hover:text-teal-base transition-colors">FAQ</Link></li>
+              <li><Link href="/privacy" className="block py-2 hover:text-teal-base transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="block py-2 hover:text-teal-base transition-colors">Terms of Service</Link></li>
+              <li><Link href="/login" className="block py-2 hover:text-teal-base transition-colors underline decoration-teal-base/20 underline-offset-4 font-medium text-brown/90">Team Login</Link></li>
+              <li className="py-2"><span>Pleasant Grove, UT</span></li>
               {phone && (
                 <li>
-                  <a href={`tel:${phone.replace(/\D/g, '')}`} className="hover:text-teal-base transition-colors">
+                  <a href={`tel:${phone.replace(/\D/g, '')}`} className="block py-2 hover:text-teal-base transition-colors">
                     {phone}
                   </a>
                 </li>

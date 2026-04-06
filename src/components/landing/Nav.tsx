@@ -52,7 +52,7 @@ export function Nav() {
             
             {/* Mobile Menu Toggle */}
             <button 
-              className="p-2 md:hidden text-brown hover:text-teal-dark transition-colors"
+              className="p-3 -mr-1 md:hidden text-brown hover:text-teal-dark transition-colors"
               onClick={toggleMenu}
               aria-label="Toggle Menu"
             >
@@ -76,7 +76,7 @@ export function Nav() {
                 <Link 
                   key={link.name} 
                   href={link.href} 
-                  className="block text-base font-medium text-brown hover:text-teal-dark py-2"
+                  className="block text-base font-medium text-brown hover:text-teal-dark py-3"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.name}
