@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
-    "build:deploy": "next build && node scripts/prepare-deploy.js",
+    "build": "next build && node scripts/prepare-deploy.js",
     "start": "next start",
     "lint": "eslint"
   },
