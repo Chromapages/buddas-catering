@@ -1,26 +1,49 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Flower2, Send } from "lucide-react";
+import { Flower2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
 export const MobileStickyCTA = () => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isOverThreshold, setIsOverThreshold] = useState(false);
+  const [isFormInView, setIsFormInView] = useState(false);
 
   useEffect(() => {
+    // 1. Scroll Threshold Logic (200px)
     const handleScroll = () => {
-      // Show after scrolling 200px
       if (window.scrollY > 200) {
-        setIsVisible(true);
+        setIsOverThreshold(true);
       } else {
-        setIsVisible(false);
+        setIsOverThreshold(false);
       }
     };
 
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    // 2. Intersection Observer (Hide when #book is visible)
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsFormInView(entry.isIntersecting);
+      },
+      {
+        threshold: 0.1, // Hide when form section is 10% visible
+        rootMargin: "0px 0px -50px 0px" // Trigger slightly before it hits the viewport fully
+      }
+    );
+
+    const formElement = document.getElementById("book");
+    if (formElement) {
+      observer.observe(formElement);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (formElement) observer.unobserve(formElement);
+    };
   }, []);
+
+  const isVisible = isOverThreshold && !isFormInView;
 
   return (
     <AnimatePresence>
@@ -29,6 +52,7 @@ export const MobileStickyCTA = () => {
           initial={{ scale: 0, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0, opacity: 0, y: 20 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
           className="fixed bottom-6 right-6 z-50 md:hidden"
         >
           <Link
@@ -39,7 +63,7 @@ export const MobileStickyCTA = () => {
             <div className="absolute inset-x-0 top-0 h-1/2 bg-white/10" />
             
             <Flower2 className="h-4 w-4 animate-pulse" />
-            <span className="font-heading text-sm font-bold tracking-tight">
+            <span className="font-heading text-sm font-bold tracking-tight text-cream">
               Start Quote
             </span>
           </Link>
