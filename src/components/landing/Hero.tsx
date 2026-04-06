@@ -70,7 +70,7 @@ export function Hero({ data }: HeroProps) {
   };
 
   return (
-    <section className="relative min-h-[90dvh] flex items-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center overflow-hidden py-12 md:py-24">
       {/* Full-Bleed Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -85,7 +85,7 @@ export function Hero({ data }: HeroProps) {
         <div className="absolute inset-0 bg-teal-dark/10 mix-blend-multiply"></div>
       </div>
 
-      <div className="container-rig relative z-10 pt-20">
+      <div className="container-rig relative z-10">
         <motion.div 
           className="max-w-2xl bg-white/5 backdrop-blur-md border border-white/20 p-8 md:p-12 rounded-[2.5rem] shadow-2xl"
           variants={containerVariants}
