@@ -77,7 +77,7 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const scrollPosition = scrollRef.current.scrollLeft;
-    const itemWidth = scrollRef.current.offsetWidth * 0.85; // Matches the min-w-[85vw] approximate
+    const itemWidth = scrollRef.current.offsetWidth * 0.8; // Matches the min-w-[80vw] approximate
     const newIndex = Math.round(scrollPosition / itemWidth);
     if (newIndex !== activeIndex && newIndex >= 0 && newIndex < displayItems.length) {
       setActiveIndex(newIndex);
@@ -147,8 +147,8 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
               variants={itemVariants}
               className={cn(
                 "group relative rounded-[2rem] overflow-hidden transition-all duration-500",
-                "min-w-[85vw] md:min-w-0 snap-center shrink-0 mr-4 md:mr-0", // Mobile: Card Sizing & Snap
-                idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[450px] md:h-auto" : "h-[450px] md:h-auto",
+                "min-w-[80vw] md:min-w-0 snap-center shrink-0 mr-4 md:mr-0", // Mobile: Card Sizing & Snap
+                idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[400px] md:h-auto" : "h-[400px] md:h-auto",
                 idx === 1 ? "lg:col-span-2 lg:row-span-1" : "",
                 idx === 2 ? "lg:col-span-1 lg:row-span-1" : "",
                 idx === 3 ? "lg:col-span-1 lg:row-span-1" : "",
@@ -182,7 +182,7 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
 
               {/* Card Content */}
               <div className={cn(
-                "relative h-full w-full p-8 flex flex-col",
+                "relative h-full w-full p-6 md:p-8 flex flex-col",
                 item.type === "info" ? "justify-between" : "justify-end"
               )}>
                  {item.type === "info" ? (
@@ -234,35 +234,35 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
                          )}
                          <h3 className={cn(
                            "font-bold text-white tracking-tight",
-                           idx === 0 ? "text-3xl md:text-5xl" : "text-2xl md:text-3xl"
+                           idx === 0 ? "text-2xl md:text-5xl" : "text-xl md:text-3xl"
                          )}>
                             {item.name}
                          </h3>
                          <p className={cn(
                            "text-white/70 leading-relaxed max-w-sm",
-                           idx === 0 ? "text-lg" : "text-sm"
+                           idx === 0 ? "text-sm md:text-lg" : "text-xs md:text-sm"
                          )}>
                             {item.description}
                          </p>
                       </div>
 
-                       <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                       <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-auto">
                           <div className="flex flex-col">
                              <span className="text-white/50 text-[10px] font-bold tracking-widest uppercase mb-0.5">{item.priceTitle || "Price"}</span>
-                             <span className="text-white font-bold text-2xl tracking-tight leading-none">{item.price}</span>
+                             <span className="text-white font-bold text-xl md:text-2xl tracking-tight leading-none">{item.price}</span>
                           </div>
                          
                          {idx === 0 ? (
-                           <Button className="bg-white text-teal-dark hover:bg-teal-base hover:text-white rounded-full px-8 h-12 font-bold shadow-xl flex items-center gap-3">
-                              <ShoppingCart className="w-5 h-5" />
-                              Add to Order
+                           <Button className="bg-white text-teal-dark hover:bg-teal-base hover:text-white rounded-full px-5 md:px-8 h-10 md:h-12 text-sm font-bold shadow-xl flex items-center gap-2 md:gap-3 shrink-0">
+                              <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
+                              Add
                            </Button>
                          ) : idx === 1 ? (
-                           <button className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-teal-dark transition-all">
-                              <Plus className="w-6 h-6" />
+                           <button className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-teal-dark transition-all shrink-0">
+                              <Plus className="w-5 h-5 md:w-6 md:h-6" />
                            </button>
                          ) : (
-                           <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-teal-dark rounded-xl h-10 text-xs font-bold bg-white/5 backdrop-blur-sm">
+                           <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-teal-dark rounded-xl h-10 text-xs font-bold bg-white/5 backdrop-blur-sm shrink-0">
                               Quick Add
                            </Button>
                          )}
@@ -281,7 +281,7 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
               key={idx}
               onClick={() => {
                 if (scrollRef.current) {
-                  const itemWidth = scrollRef.current.offsetWidth * 0.85;
+                  const itemWidth = scrollRef.current.offsetWidth * 0.8;
                   scrollRef.current.scrollTo({ left: idx * itemWidth, behavior: 'smooth' });
                 }
               }}
