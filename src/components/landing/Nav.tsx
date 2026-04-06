@@ -46,7 +46,7 @@ export function Nav() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button asChild className="shadow-sm">
+            <Button asChild className="hidden md:flex shadow-sm">
               <Link href="#book">Start My Quote</Link>
             </Button>
             
@@ -82,11 +82,6 @@ export function Nav() {
                   {link.name}
                 </Link>
               ))}
-              <div className="pt-4 border-t border-gray-border flex flex-col gap-3">
-                 <Button asChild className="w-full justify-center">
-                   <Link href="#book" onClick={() => setIsOpen(false)}>Start My Quote</Link>
-                 </Button>
-              </div>
             </div>
           </motion.div>
         )}

@@ -1,5 +1,6 @@
 import { Nav } from "@/components/landing/Nav";
 import { Footer } from "@/components/landing/Footer";
+import { MobileStickyCTA } from "@/components/landing/MobileStickyCTA";
 
 export default function PublicLayout({
   children,
@@ -12,6 +13,7 @@ export default function PublicLayout({
       <main className="flex-1">
         {children}
       </main>
+      <MobileStickyCTA />
       <Footer />
     </div>
   );
