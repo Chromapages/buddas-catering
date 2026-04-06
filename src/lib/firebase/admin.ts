@@ -11,16 +11,39 @@ if (!admin.apps.length) {
     if (!projectId || !clientEmail || !privateKey) {
       console.warn('Firebase Admin Initialization: Missing one or more required environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY). Client-side features may still work, but admin features will fail.');
     } else {
-      // 1. Remove surrounding quotes if they exist (frequent issue in Hostinger/Vercel)
+      // Foolproof Private Key Formatter
       let formattedKey = privateKey;
+      
+      // 1. Remove surrounding quotes if they exist
       if (formattedKey.startsWith('"') && formattedKey.endsWith('"')) {
         formattedKey = formattedKey.slice(1, -1);
       } else if (formattedKey.startsWith("'") && formattedKey.endsWith("'")) {
         formattedKey = formattedKey.slice(1, -1);
       }
 
-      // 2. Replace escaped newlines with actual newlines
-      formattedKey = formattedKey.replace(/\\n/g, '\n');
+      // 2. Replace escaped literal \n or \\n with actual newlines
+      formattedKey = formattedKey.replace(/\\\\n/g, '\n').replace(/\\n/g, '\n');
+
+      // 3. Rebuild the PEM if Hostinger stripped newlines and replaced them with spaces
+      const beginMarker = '-----BEGIN PRIVATE KEY-----';
+      const endMarker = '-----END PRIVATE KEY-----';
+      
+      // If it doesn't have proper newlines but has the markers, rebuild it completely
+      if (!formattedKey.includes('\n') && formattedKey.includes(beginMarker) && formattedKey.includes(endMarker)) {
+        const base64Part = formattedKey
+          .replace(beginMarker, '')
+          .replace(endMarker, '')
+          .replace(/\s+/g, ''); // Strip all remaining spaces or whitespace
+          
+        // Reconstruct valid PEM format
+        // The regex splits the base64 string into chunks of 64 characters (standard PEM line length)
+        const matchedChunks = base64Part.match(/.{1,64}/g);
+        if (matchedChunks) {
+          formattedKey = `${beginMarker}\n${matchedChunks.join('\n')}\n${endMarker}\n`;
+        } else {
+          formattedKey = `${beginMarker}\n${base64Part}\n${endMarker}\n`;
+        }
+      }
 
       admin.initializeApp({
         credential: admin.credential.cert({
