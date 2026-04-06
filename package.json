@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build && node scripts/prepare-deploy.js",
-    "start": "next start",
+    "start": "node server-hostinger.js",
     "lint": "eslint"
   },
   "dependencies": {
