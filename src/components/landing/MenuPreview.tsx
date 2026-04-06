@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -70,6 +71,18 @@ const MOCK_ITEMS: MenuItem[] = [
 
 export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
   const displayItems = items.length > 0 ? items.slice(0, 4) : MOCK_ITEMS;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const scrollPosition = scrollRef.current.scrollLeft;
+    const itemWidth = scrollRef.current.offsetWidth * 0.85; // Matches the min-w-[85vw] approximate
+    const newIndex = Math.round(scrollPosition / itemWidth);
+    if (newIndex !== activeIndex && newIndex >= 0 && newIndex < displayItems.length) {
+      setActiveIndex(newIndex);
+    }
+  };
 
   const badge = sectionData?.badge || "OUR OFFERINGS";
   const headline = sectionData?.headline || "Authentic Island Flavors";
@@ -117,11 +130,16 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
         </div>
 
         <motion.div
+          ref={scrollRef}
+          onScroll={handleScroll}
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[300px]"
+          className={cn(
+            "flex overflow-x-auto pb-8 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: Carousel
+            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none" // Desktop: Grid
+          )}
         >
           {displayItems.map((item, idx) => (
             <motion.div
@@ -129,7 +147,8 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
               variants={itemVariants}
               className={cn(
                 "group relative rounded-[2rem] overflow-hidden transition-all duration-500",
-                idx === 0 ? "lg:col-span-2 lg:row-span-2 h-full" : "h-full",
+                "min-w-[85vw] md:min-w-0 snap-center shrink-0 mr-4 md:mr-0", // Mobile: Card Sizing & Snap
+                idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[450px] md:h-auto" : "h-[450px] md:h-auto",
                 idx === 1 ? "lg:col-span-2 lg:row-span-1" : "",
                 idx === 2 ? "lg:col-span-1 lg:row-span-1" : "",
                 idx === 3 ? "lg:col-span-1 lg:row-span-1" : "",
@@ -254,6 +273,26 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Mobile Pagination Dots */}
+        <div className="flex md:hidden justify-center items-center gap-2 mt-4">
+          {displayItems.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                if (scrollRef.current) {
+                  const itemWidth = scrollRef.current.offsetWidth * 0.85;
+                  scrollRef.current.scrollTo({ left: idx * itemWidth, behavior: 'smooth' });
+                }
+              }}
+              className={cn(
+                "h-2 rounded-full transition-all duration-300",
+                activeIndex === idx ? "w-8 bg-teal-base shadow-sm" : "w-2 bg-teal-dark/10"
+              )}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
 
         {/* Global CTA */}
         <div className="mt-16 text-center">
