@@ -96,7 +96,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
 
   if (isSuccess) {
     return (
-    <section id="book" className="bg-cream pt-4 pb-16 md:pt-10 md:pb-20 lg:pt-12 lg:pb-24 border-t border-gray-border">
+    <section id="book" className="bg-cream py-16 md:py-20 lg:py-24 border-t border-gray-border">
         <div className="mx-auto max-w-4xl px-4 md:px-6">
           <SuccessState onReset={() => { setIsSuccess(false); setStep(1); }} />
         </div>
@@ -105,7 +105,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
   }
 
   return (
-    <section id="book" className="bg-cream pt-4 pb-16 md:pt-10 md:pb-20 lg:pt-12 lg:pb-24 border-t border-gray-border overflow-hidden">
+    <section id="book" className="bg-cream py-16 md:py-20 lg:py-24 border-t border-gray-border overflow-hidden">
       <div className="container-rig px-4 md:px-6">
         <div className="flex flex-col lg:flex-row gap-12 items-start">
           
