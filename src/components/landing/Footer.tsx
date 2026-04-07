@@ -31,7 +31,7 @@ export function Footer() {
 
   return (
     <footer className="bg-cream text-brown border-t border-gray-border/40">
-      <div className="container-rig py-12 md:py-16">
+      <div className="container-rig py-0 md:py-16">
         
         {/* DESKTOP FOOTER (4-Column Grid) */}
         <div className="hidden md:grid grid-cols-4 gap-12">
@@ -84,10 +84,10 @@ export function Footer() {
         </div>
 
         {/* MOBILE FOOTER (Ultra-Minimal Slim) */}
-        <div className="md:hidden flex flex-col items-center text-center space-y-6 py-8 px-4">
+        <div className="md:hidden flex flex-col items-center text-center space-y-4 pt-10 pb-2 px-4">
           {/* Logo & Slogan Condensed */}
           <div className="flex flex-col items-center">
-            <Link href="/" className="flex items-center space-x-2 group mb-1">
+            <Link href="/" className="flex items-center space-x-2 group mb-0.5">
               <Flower2 className="h-6 w-6 text-teal-base transition-transform group-hover:rotate-12" />
               <span className="font-heading text-xl font-bold tracking-tight text-teal-dark">
                 Buddas <span className="text-brown">Catering</span>
@@ -110,7 +110,7 @@ export function Footer() {
           </nav>
 
           {/* Contact & Socials (Condensed) */}
-          <div className="flex flex-col items-center space-y-4">
+          <div className="flex flex-col items-center space-y-3">
             <div className="flex flex-col">
               <span className="text-[10px] uppercase tracking-widest text-brown/30 font-bold mb-0.5">Text for Support</span>
               <a href={phone ? `tel:${phone.replace(/\D/g, '')}` : "#"} className="text-lg font-heading font-bold text-teal-dark tracking-tight">
@@ -120,7 +120,7 @@ export function Footer() {
             
             <div className="flex gap-5">
               {[Instagram, Facebook, Linkedin].map((Icon, i) => (
-                <a key={i} href="#" className="p-1.5 text-brown/40 hover:text-teal-base transition-colors" aria-label={`Social ${i}`}>
+                <a key={i} href="#" className="p-1 text-brown/40 hover:text-teal-base transition-colors" aria-label={`Social ${i}`}>
                   <Icon className="h-5 w-5" />
                 </a>
               ))}
@@ -128,7 +128,7 @@ export function Footer() {
           </div>
 
           {/* Copyright & Safe-Area Header Reduced */}
-          <div className="pt-4 border-t border-gray-border/20 w-full flex flex-col items-center space-y-1 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <div className="pt-3 border-t border-gray-border/20 w-full flex flex-col items-center space-y-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <p className="text-[9px] text-brown/40 font-medium tracking-tight">
               © {year} Buddas Hawaiian Bakery & Grill.
             </p>
