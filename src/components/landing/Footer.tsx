@@ -83,56 +83,56 @@ export function Footer() {
           </div>
         </div>
 
-        {/* MOBILE FOOTER (Ultra-Minimal) */}
-        <div className="md:hidden flex flex-col items-center text-center space-y-12">
-          {/* Logo & Slogan */}
+        {/* MOBILE FOOTER (Ultra-Minimal Slim) */}
+        <div className="md:hidden flex flex-col items-center text-center space-y-6 py-8 px-4">
+          {/* Logo & Slogan Condensed */}
           <div className="flex flex-col items-center">
-            <Link href="/" className="flex items-center space-x-2 group mb-3">
-              <Flower2 className="h-7 w-7 text-teal-base transition-transform group-hover:rotate-12" />
-              <span className="font-heading text-2xl font-bold tracking-tight text-teal-dark">
+            <Link href="/" className="flex items-center space-x-2 group mb-1">
+              <Flower2 className="h-6 w-6 text-teal-base transition-transform group-hover:rotate-12" />
+              <span className="font-heading text-xl font-bold tracking-tight text-teal-dark">
                 Buddas <span className="text-brown">Catering</span>
               </span>
             </Link>
-            <p className="text-brown/50 text-[10px] uppercase tracking-[0.2em] font-bold">Pleasant Grove, Utah</p>
+            <p className="text-brown/40 text-[9px] uppercase tracking-[0.2em] font-bold">Pleasant Grove, Utah</p>
           </div>
 
-          {/* Quick Links Horizontal */}
-          <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 px-4">
+          {/* Quick Links Horizontal (Condesned Gaps) */}
+          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
             {["Menu", "How It Works", "FAQ", "Memberships"].map((item) => (
               <Link 
                 key={item} 
                 href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
-                className="text-sm font-bold text-brown/90 hover:text-teal-base transition-colors tracking-tight"
+                className="text-xs font-bold text-brown/90 hover:text-teal-base transition-colors tracking-tight"
               >
                 {item}
               </Link>
             ))}
           </nav>
 
-          {/* Minimal Contact & Socials */}
-          <div className="flex flex-col items-center space-y-6">
+          {/* Contact & Socials (Condensed) */}
+          <div className="flex flex-col items-center space-y-4">
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-widest text-brown/30 font-bold mb-1">Text for Support</span>
-              <a href={phone ? `tel:${phone.replace(/\D/g, '')}` : "#"} className="text-xl font-heading font-bold text-teal-dark tracking-tight">
+              <span className="text-[10px] uppercase tracking-widest text-brown/30 font-bold mb-0.5">Text for Support</span>
+              <a href={phone ? `tel:${phone.replace(/\D/g, '')}` : "#"} className="text-lg font-heading font-bold text-teal-dark tracking-tight">
                 {phone || "801.123.4567"}
               </a>
             </div>
             
-            <div className="flex gap-6">
+            <div className="flex gap-5">
               {[Instagram, Facebook, Linkedin].map((Icon, i) => (
-                <a key={i} href="#" className="p-2 text-brown/40 hover:text-teal-base transition-colors" aria-label={`Social ${i}`}>
+                <a key={i} href="#" className="p-1.5 text-brown/40 hover:text-teal-base transition-colors" aria-label={`Social ${i}`}>
                   <Icon className="h-5 w-5" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Copyright & Safe-Area */}
-          <div className="pt-8 border-t border-gray-border/20 w-full flex flex-col items-center space-y-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-            <p className="text-[10px] text-brown/40 font-medium">
+          {/* Copyright & Safe-Area Header Reduced */}
+          <div className="pt-4 border-t border-gray-border/20 w-full flex flex-col items-center space-y-1 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+            <p className="text-[9px] text-brown/40 font-medium tracking-tight">
               © {year} Buddas Hawaiian Bakery & Grill.
             </p>
-            <div className="flex gap-4 text-[10px] text-brown/40 font-bold uppercase tracking-wider">
+            <div className="flex gap-4 text-[9px] text-brown/40 font-bold uppercase tracking-wider">
               <Link href="/privacy">Privacy</Link>
               <span>•</span>
               <Link href="/terms">Terms</Link>
