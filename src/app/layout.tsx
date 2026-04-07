@@ -100,6 +100,22 @@ export default function RootLayout({
             }),
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', function(e) {
+                if (e.message && (e.message.indexOf('Failed to load chunk') !== -1 || e.message.indexOf('ChunkLoadError') !== -1)) {
+                  window.location.reload(true);
+                }
+              });
+              window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && e.reason.message && (e.reason.message.indexOf('Failed to load chunk') !== -1 || e.reason.message.indexOf('ChunkLoadError') !== -1)) {
+                  window.location.reload(true);
+                }
+              });
+            `
+          }}
+        />
       </head>
       <body 
         className="min-h-full flex flex-col font-body bg-cream text-brown selection:bg-teal-base/30"
