@@ -146,7 +146,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
           </div>
 
           <div className="w-full lg:w-2/3">
-            <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-3xl shadow-xl border border-gray-border relative">
+            <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-3xl shadow-xl border border-gray-border relative">
               
               {/* Step Progress Bar */}
               <div className="flex items-center justify-between mb-10 px-2">
@@ -182,7 +182,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
                 {/* STEP 1: EVENT SCOPE */}
                 {step === 1 && (
                   <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-teal-dark uppercase tracking-tight">Event Type <span className="text-orange">*</span></label>
                         <Select 
@@ -213,7 +213,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-teal-dark uppercase tracking-tight">Est. Headcount <span className="text-orange">*</span></label>
                         <Input 
@@ -271,7 +271,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
                 {/* STEP 2: CONTACT & DETAILS */}
                 {step === 2 && (
                   <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-teal-dark uppercase tracking-tight">Full Name <span className="text-orange">*</span></label>
                         <Input 
@@ -290,7 +290,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-teal-dark uppercase tracking-tight">Work Email <span className="text-orange">*</span></label>
                         <Input 

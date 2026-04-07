@@ -85,7 +85,7 @@ export function Hero({ data }: HeroProps) {
         <div className="absolute inset-0 bg-teal-dark/10 mix-blend-multiply"></div>
       </div>
 
-      <div className="container-rig relative z-10">
+      <div className="container relative z-10 px-4">
         <motion.div 
           className="max-w-2xl bg-white/5 backdrop-blur-md border border-white/20 p-5 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl"
           variants={containerVariants}
@@ -124,7 +124,7 @@ export function Hero({ data }: HeroProps) {
               </Button>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-4 pt-6 border-t border-white/10">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/10">
               {features.map((feature, i) => (
                 <div key={i} className="flex items-center gap-3 text-white/90 font-bold text-sm sm:text-base">
                   <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-teal-base shrink-0" />

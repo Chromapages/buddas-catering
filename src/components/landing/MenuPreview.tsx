@@ -150,7 +150,7 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           className={cn(
-            "flex overflow-x-auto pb-8 gap-4 px-8 snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: Carousel with centered snapping padding
+            "flex overflow-x-auto pb-8 gap-4 px-4 snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: 16px Grid Margin
             "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none" // Desktop: Grid
           )}
         >
@@ -161,7 +161,7 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
               variants={itemVariants}
               className={cn(
                 "group relative rounded-[2rem] overflow-hidden transition-all duration-500",
-                "w-[78vw] md:w-auto snap-center shrink-0 tracking-normal border border-white/5 backdrop-blur-[2px]", // Mobile: 78vw Card Sizing & Apple Snap
+                "w-[85vw] md:w-auto snap-start shrink-0 tracking-normal border border-white/5 backdrop-blur-[2px]", // Mobile: 85vw Card Sizing & Standard Grid Snap Start
                 idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[400px] md:h-auto" : "h-[400px] md:h-auto",
                 idx === 1 ? "lg:col-span-2 lg:row-span-1" : "",
                 idx === 2 ? "lg:col-span-1 lg:row-span-1" : "",

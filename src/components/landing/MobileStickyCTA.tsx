@@ -53,7 +53,7 @@ export const MobileStickyCTA = () => {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0, opacity: 0, y: 20 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="fixed bottom-8 right-6 mb-[env(safe-area-inset-bottom)] z-[9999] md:hidden"
+          className="fixed bottom-12 right-4 mb-[env(safe-area-inset-bottom)] z-[9999] md:hidden"
         >
           <Link
             href="#book"

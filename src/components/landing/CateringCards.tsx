@@ -144,7 +144,7 @@ export function CateringCards({ sectionData }: CateringCardsProps) {
           {/* Carousel Track */}
           <div className="overflow-visible lg:overflow-visible">
             <motion.div 
-              className="flex gap-6"
+              className="flex gap-4"
               animate={{ x: `-${currentIndex * (isMobile ? 100 : 50)}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
