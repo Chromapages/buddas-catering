@@ -43,16 +43,18 @@ export default function SalesLayout({
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="absolute right-0 top-0 -mr-12 pt-4">
-          <button
-            type="button"
-            className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <span className="sr-only">Close sidebar</span>
-            <X className="h-6 w-6 text-white" aria-hidden="true" />
-          </button>
-        </div>
+        {sidebarOpen && (
+          <div className="absolute right-0 top-0 -mr-12 pt-4">
+            <button
+              type="button"
+              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <span className="sr-only">Close sidebar</span>
+              <X className="h-6 w-6 text-white" aria-hidden="true" />
+            </button>
+          </div>
+        )}
         <SalesSidebar />
       </div>
 
