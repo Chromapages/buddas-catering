@@ -100,7 +100,7 @@ export function Hero({ data }: HeroProps) {
               </Badge>
             </motion.div>
             
-            <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white font-heading leading-tight md:leading-[1.1]">
+            <motion.h1 variants={itemVariants} className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white font-heading leading-[1.1] md:leading-[1.1]">
               {renderHeadline(headline)}
             </motion.h1>
 
@@ -124,10 +124,10 @@ export function Hero({ data }: HeroProps) {
               </Button>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-4 pt-6 border-t border-white/10">
               {features.map((feature, i) => (
-                <div key={i} className="flex items-center gap-3 text-white/90 font-bold">
-                  <CheckCircle2 className="w-6 h-6 text-teal-base" />
+                <div key={i} className="flex items-center gap-3 text-white/90 font-bold text-sm sm:text-base">
+                  <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-teal-base shrink-0" />
                   <span>{feature}</span>
                 </div>
               ))}

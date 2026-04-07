@@ -137,8 +137,8 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           className={cn(
-            "flex overflow-x-auto pb-8 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: Carousel
-            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none" // Desktop: Grid
+            "flex overflow-x-auto pb-8 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide hide-scrollbar after:content-[''] after:w-6 after:shrink-0", // Mobile: Carousel
+            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none md:after:hidden" // Desktop: Grid
           )}
         >
           {displayItems.map((item, idx) => (
@@ -295,11 +295,15 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
         </div>
 
         {/* Global CTA */}
-        <div className="mt-16 text-center">
-           <Button size="lg" className="h-16 px-12 text-lg bg-teal-dark hover:bg-teal-base shadow-2xl shadow-teal-dark/10 rounded-2xl group transition-all" asChild>
-             <Link href="/menu" className="flex items-center gap-3">
-               EXPLORE FULL CATERING MENU
-               <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+        <div className="mt-16 text-center px-4 md:px-0">
+           <Button 
+             size="lg" 
+             className="w-full max-w-md md:w-auto h-16 px-6 md:px-12 text-base md:text-lg bg-teal-dark hover:bg-teal-base shadow-2xl shadow-teal-dark/10 rounded-2xl group transition-all" 
+             asChild
+           >
+             <Link href="/menu" className="flex items-center justify-center gap-2 md:gap-3">
+               EXPLORE FULL MENU
+               <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform" />
              </Link>
            </Button>
         </div>
