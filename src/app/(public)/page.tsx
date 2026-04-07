@@ -21,8 +21,8 @@ export default async function LandingPage() {
     <>
       <Hero data={landingPage?.hero} />
       <MenuPreview items={menuItems} sectionData={landingPage?.menuPreview} />
-      <BuildYourPlatter sectionData={landingPage?.buildYourPlatter} />
       <CateringCards sectionData={landingPage?.occasions} />
+      <BuildYourPlatter sectionData={landingPage?.buildYourPlatter} />
       <HowItWorks sectionData={landingPage?.howItWorks} />
       <ProvenExcellence testimonials={testimonials} sectionData={landingPage?.trust} />
       <FAQ sectionData={landingPage?.faq} />

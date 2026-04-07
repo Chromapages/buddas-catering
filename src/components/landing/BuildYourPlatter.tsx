@@ -83,54 +83,92 @@ export function BuildYourPlatter({ sectionData }: BuildYourPlatterProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 lg:gap-20 items-center">
           {/* Visual Area (Now Left) */}
           <div className="relative pt-6 lg:pt-0">
-            {/* The Plate Container */}
+            {/* MOBILE ONLY: Cinematic Redesign (Match Ref 2) */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
-              whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ type: "spring", stiffness: 60, damping: 15 }}
-              className="relative aspect-square max-w-[600px] mx-auto bg-white rounded-[2.5rem] md:rounded-[4rem] shadow-[0_40px_80px_-15px_rgba(45,35,30,0.08)] p-6 sm:p-10 md:p-16 flex items-center justify-center border border-white"
+              className="md:hidden relative aspect-[4/5] rounded-none overflow-hidden border-b-4 border-teal-base -mx-4 w-[calc(100%+2rem)]"
             >
-              <div className="relative w-full h-full group">
-                <Image
-                  src="/images/premium_white_plate_gold_rim.png"
-                  alt="Empty premium white plate with gold rim"
-                  fill
-                  className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-transform duration-700 group-hover:scale-105"
-                  priority
-                />
+              {/* Cinematic Background Image */}
+              <Image
+                src="/images/menu/kalua-pork.jpg" // High-impact food image
+                alt="Bountiful Budda's Platter"
+                fill
+                className="object-cover"
+              />
+              
+              {/* Deep Cinematic Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-teal-dark via-teal-dark/40 to-transparent"></div>
+              
+              {/* Bottom Metadata Row (Ref 2 Style) */}
+              <div className="absolute bottom-0 left-0 right-0 h-14 bg-teal-dark/95 backdrop-blur-md flex border-t border-white/10">
+                <div className="flex-1 border-r border-white/10 flex flex-col items-center justify-center p-2">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-tighter leading-none">Status</span>
+                  <span className="text-xs font-bold text-teal-base leading-none mt-1 uppercase">Step 01</span>
+                </div>
+                <div className="flex-[1.5] border-r border-white/10 flex flex-col items-center justify-center p-2 bg-teal-base/10 px-4">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-tighter leading-none">Order Type</span>
+                  <span className="text-xs font-bold text-white leading-none mt-1 uppercase truncate">Luau Platter</span>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center p-2">
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-tighter leading-none">Portion</span>
+                  <span className="text-xs font-bold text-white leading-none mt-1 uppercase">Large</span>
+                </div>
               </div>
-
-              {/* Decorative accent behind the plate */}
-              <div className="absolute -inset-4 bg-gradient-to-tr from-orange/5 to-transparent rounded-[2.5rem] md:rounded-[4.5rem] -z-10"></div>
             </motion.div>
 
-            {/* Floating Testimonial Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 40, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.6, type: "spring", stiffness: 100, damping: 20 }}
-              className="absolute -bottom-6 -right-2 md:-bottom-8 md:-right-8 max-w-[280px] md:max-w-[320px] bg-white rounded-2xl md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-[0_30px_60px_-12px_rgba(45,35,30,0.15)] border border-gray-border/50 backdrop-blur-xl group hover:shadow-teal-base/5 transition-all duration-500 text-left"
-            >
-              <div className="space-y-4 md:space-y-5">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="flex text-orange">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 md:w-5 md:h-5 fill-current" />)}
+            {/* DESKTOP ONLY: Premium Plate (Ref 1 Look) */}
+            <div className="hidden md:block">
+              {/* The Plate Container */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 60, damping: 15 }}
+                className="relative aspect-square max-w-[600px] mx-auto bg-white rounded-[2.5rem] md:rounded-[4rem] shadow-[0_40px_80px_-15px_rgba(45,35,30,0.08)] p-6 sm:p-10 md:p-16 flex items-center justify-center border border-white"
+              >
+                <div className="relative w-full h-full group">
+                  <Image
+                    src="/images/premium_white_plate_gold_rim.png"
+                    alt="Empty premium white plate with gold rim"
+                    fill
+                    className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.12)] transition-transform duration-700 group-hover:scale-105"
+                    priority
+                  />
+                </div>
+
+                {/* Decorative accent behind the plate */}
+                <div className="absolute -inset-4 bg-gradient-to-tr from-orange/5 to-transparent rounded-[2.5rem] md:rounded-[4.5rem] -z-10"></div>
+              </motion.div>
+
+              {/* Floating Testimonial Card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 40, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.6, type: "spring", stiffness: 100, damping: 20 }}
+                className="absolute -bottom-6 -right-2 md:-bottom-8 md:-right-8 max-w-[280px] md:max-w-[320px] bg-white rounded-2xl md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-[0_30px_60px_-12px_rgba(45,35,30,0.15)] border border-gray-border/50 backdrop-blur-xl group hover:shadow-teal-base/5 transition-all duration-500 text-left"
+              >
+                <div className="space-y-4 md:space-y-5">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="flex text-orange">
+                      {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 md:w-5 md:h-5 fill-current" />)}
+                    </div>
+                    <span className="text-sm md:text-base font-bold text-brown tracking-tight">4.9/5 Rating</span>
                   </div>
-                  <span className="text-sm md:text-base font-bold text-brown tracking-tight">4.9/5 Rating</span>
-                </div>
-                <p className="text-base md:text-lg italic text-brown/80 leading-relaxed font-medium">
-                  {"“The easiest catering order I've ever made. The Kalua Pork was a huge hit!”"}
-                </p>
-                <div className="flex items-center gap-3 pt-1">
-                  <div className="w-6 md:w-8 h-[2px] bg-teal-base/30"></div>
-                  <p className="text-[10px] md:text-xs font-bold text-teal-base uppercase tracking-widest">
-                    Sarah K., Google HQ
+                  <p className="text-base md:text-lg italic text-brown/80 leading-relaxed font-medium">
+                    {"“The easiest catering order I've ever made. The Kalua Pork was a huge hit!”"}
                   </p>
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="w-6 md:w-8 h-[2px] bg-teal-base/30"></div>
+                    <p className="text-[10px] md:text-xs font-bold text-teal-base uppercase tracking-widest">
+                      Sarah K., Google HQ
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
           </div>
 
           {/* Content Area (Now Right) */}
