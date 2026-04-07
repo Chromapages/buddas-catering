@@ -74,15 +74,29 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const scrollPosition = scrollRef.current.scrollLeft;
-    const itemWidth = scrollRef.current.offsetWidth * 0.8; // Matches the min-w-[80vw] approximate
-    const newIndex = Math.round(scrollPosition / itemWidth);
-    if (newIndex !== activeIndex && newIndex >= 0 && newIndex < displayItems.length) {
-      setActiveIndex(newIndex);
-    }
-  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute("data-index"));
+            if (!isNaN(index)) {
+              setActiveIndex(index);
+            }
+          }
+        });
+      },
+      {
+        root: scrollRef.current,
+        threshold: 0.6,
+      }
+    );
+
+    const cards = scrollRef.current?.querySelectorAll("[data-index]");
+    cards?.forEach((card) => observer.observe(card));
+
+    return () => observer.disconnect();
+  }, [displayItems.length]);
 
   const badge = sectionData?.badge || "OUR OFFERINGS";
   const headline = sectionData?.headline || "Authentic Island Flavors";
@@ -131,23 +145,23 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
 
         <motion.div
           ref={scrollRef}
-          onScroll={handleScroll}
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           className={cn(
-            "flex overflow-x-auto pb-8 -mx-6 px-6 snap-x snap-mandatory scrollbar-hide hide-scrollbar after:content-[''] after:w-6 after:shrink-0", // Mobile: Carousel
-            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none md:after:hidden" // Desktop: Grid
+            "flex overflow-x-auto pb-8 gap-4 px-[7.5vw] snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: Carousel with centered snapping padding
+            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:snap-none" // Desktop: Grid
           )}
         >
           {displayItems.map((item, idx) => (
             <motion.div
               key={item._id}
+              data-index={idx}
               variants={itemVariants}
               className={cn(
                 "group relative rounded-[2rem] overflow-hidden transition-all duration-500",
-                "min-w-[80vw] md:min-w-0 snap-center shrink-0 mr-4 md:mr-0", // Mobile: Card Sizing & Snap
+                "w-[85vw] md:w-auto snap-center shrink-0 tracking-normal", // Mobile: 85vw Card Sizing & Apple Snap
                 idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[400px] md:h-auto" : "h-[400px] md:h-auto",
                 idx === 1 ? "lg:col-span-2 lg:row-span-1" : "",
                 idx === 2 ? "lg:col-span-1 lg:row-span-1" : "",
@@ -253,16 +267,16 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
                           </div>
                          
                          {idx === 0 ? (
-                           <Button className="bg-white text-teal-dark hover:bg-teal-base hover:text-white rounded-full px-5 md:px-8 h-10 md:h-12 text-sm font-bold shadow-xl flex items-center gap-2 md:gap-3 shrink-0">
-                              <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
+                           <Button className="bg-white text-teal-dark hover:bg-teal-base hover:text-white rounded-full px-5 md:px-8 h-12 md:h-12 text-sm font-bold shadow-xl flex items-center gap-2 md:gap-3 shrink-0">
+                              <ShoppingCart className="w-5 h-5 md:w-5 md:h-5" />
                               Add
                            </Button>
                          ) : idx === 1 ? (
-                           <button className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-teal-dark transition-all shrink-0">
-                              <Plus className="w-5 h-5 md:w-6 md:h-6" />
+                           <button className="w-12 h-12 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-teal-dark transition-all shrink-0">
+                              <Plus className="w-6 h-6 md:w-6 md:h-6" />
                            </button>
                          ) : (
-                           <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-teal-dark rounded-xl h-10 text-xs font-bold bg-white/5 backdrop-blur-sm shrink-0">
+                           <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-teal-dark rounded-xl h-11 px-4 text-xs font-bold bg-white/5 backdrop-blur-sm shrink-0">
                               Quick Add
                            </Button>
                          )}
