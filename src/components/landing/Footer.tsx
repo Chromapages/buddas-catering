@@ -1,58 +1,80 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 import { siteSettingsQuery } from "@/sanity/lib/queries";
+import { Instagram, Facebook, Linkedin, Flower2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SiteSettings {
   phoneNumber?: string;
 }
 
-async function getPhone(): Promise<string | null> {
-  try {
-    const settings = await client.fetch<SiteSettings>(siteSettingsQuery);
-    return settings?.phoneNumber ?? null;
-  } catch {
-    return null;
-  }
-}
+export function Footer() {
+  const [phone, setPhone] = useState<string | null>(null);
+  const [year, setYear] = useState<number>(2026);
 
-export async function Footer() {
-  const phone = await getPhone();
+  useEffect(() => {
+    // Client-side only data fetching & year synchronization
+    const fetchData = async () => {
+      try {
+        const settings = await client.fetch<SiteSettings>(siteSettingsQuery);
+        setPhone(settings?.phoneNumber ?? null);
+      } catch (error) {
+        console.error("Footer fetch error:", error);
+      }
+    };
+    fetchData();
+    setYear(new Date().getFullYear());
+  }, []);
 
   return (
-    <footer className="bg-cream text-brown py-12 border-t border-gray-border">
-      <div className="container-rig">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="col-span-1 md:col-span-2">
-            <span className="font-heading text-2xl font-bold tracking-tight text-teal-dark mb-4 block">
-              Buddas <span className="text-orange">Catering</span>
-            </span>
-            <p className="text-brown/70 max-w-sm text-sm leading-relaxed">
+    <footer className="bg-cream text-brown border-t border-gray-border/40">
+      <div className="container-rig py-12 md:py-16">
+        
+        {/* DESKTOP FOOTER (4-Column Grid) */}
+        <div className="hidden md:grid grid-cols-4 gap-12">
+          <div className="col-span-2">
+            <Link href="/" className="flex items-center space-x-2 group mb-6">
+              <Flower2 className="h-6 w-6 text-teal-base transition-transform group-hover:rotate-12" />
+              <span className="font-heading text-2xl font-bold tracking-tight text-teal-dark">
+                Buddas <span className="text-brown">Catering</span>
+              </span>
+            </Link>
+            <p className="text-brown/70 max-w-sm text-sm leading-relaxed mb-6">
               Premium Hawaiian corporate catering serving Utah County. 
               Zero stress, reliable delivery, and food your team actually wants to eat.
             </p>
+            <div className="flex gap-4">
+              {[Instagram, Facebook, Linkedin].map((Icon, i) => (
+                <a key={i} href="#" className="w-9 h-9 rounded-full bg-white/50 border border-gray-border/20 flex items-center justify-center text-brown/60 hover:bg-teal-base hover:text-white hover:border-teal-base transition-all transform active:scale-90" aria-label={`Social ${i}`}>
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
           </div>
           
           <div>
-            <h4 className="font-semibold mb-4 text-teal-dark">Menu</h4>
-            <ul className="space-y-1 md:space-y-2 text-sm text-brown/70">
-              <li><Link href="#menu" className="block py-2 hover:text-teal-base transition-colors">Breakfast & Meetings</Link></li>
-              <li><Link href="#menu" className="block py-2 hover:text-teal-base transition-colors">All-Hands Lunch</Link></li>
-              <li><Link href="#menu" className="block py-2 hover:text-teal-base transition-colors">Pastries & Rolls</Link></li>
-              <li><Link href="#memberships" className="block py-2 hover:text-gold transition-colors">Corporate Memberships</Link></li>
+            <h4 className="font-semibold mb-5 text-teal-dark uppercase tracking-widest text-[10px]">Menu</h4>
+            <ul className="space-y-3 text-sm text-brown/80 font-medium">
+              <li><Link href="#menu" className="hover:text-teal-base transition-colors">Breakfast & Meetings</Link></li>
+              <li><Link href="#menu" className="hover:text-teal-base transition-colors">All-Hands Lunch</Link></li>
+              <li><Link href="#menu" className="hover:text-teal-base transition-colors">Pastries & Rolls</Link></li>
+              <li><Link href="#memberships" className="hover:text-gold transition-colors">Corporate Memberships</Link></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-semibold mb-4 text-teal-dark">Company</h4>
-            <ul className="space-y-1 md:space-y-2 text-sm text-brown/70">
-              <li><Link href="#faq" className="block py-2 hover:text-teal-base transition-colors">FAQ</Link></li>
-              <li><Link href="/privacy" className="block py-2 hover:text-teal-base transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="block py-2 hover:text-teal-base transition-colors">Terms of Service</Link></li>
-              <li><Link href="/login" className="block py-2 hover:text-teal-base transition-colors underline decoration-teal-base/20 underline-offset-4 font-medium text-brown/90">Team Login</Link></li>
-              <li className="py-2"><span>Pleasant Grove, UT</span></li>
+            <h4 className="font-semibold mb-5 text-teal-dark uppercase tracking-widest text-[10px]">Company</h4>
+            <ul className="space-y-3 text-sm text-brown/80 font-medium">
+              <li><Link href="#faq" className="hover:text-teal-base transition-colors">FAQ</Link></li>
+              <li><Link href="/privacy" className="hover:text-teal-base transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-teal-base transition-colors">Terms of Service</Link></li>
+              <li><Link href="/login" className="hover:text-teal-base transition-colors underline decoration-teal-base/20 underline-offset-4">Team Login</Link></li>
               {phone && (
-                <li>
-                  <a href={`tel:${phone.replace(/\D/g, '')}`} className="block py-2 hover:text-teal-base transition-colors">
+                <li className="pt-2">
+                  <a href={`tel:${phone.replace(/\D/g, '')}`} className="text-teal-dark font-bold hover:text-teal-base transition-colors text-base tracking-tight">
                     {phone}
                   </a>
                 </li>
@@ -60,10 +82,64 @@ export async function Footer() {
             </ul>
           </div>
         </div>
-        
-        <div className="mt-12 pt-8 border-t border-gray-border/50 flex flex-col md:flex-row items-center justify-between text-xs text-brown/50">
-          <p>© {new Date().getFullYear()} Buddas Hawaiian Bakery & Grill. All rights reserved.</p>
+
+        {/* MOBILE FOOTER (Ultra-Minimal) */}
+        <div className="md:hidden flex flex-col items-center text-center space-y-12">
+          {/* Logo & Slogan */}
+          <div className="flex flex-col items-center">
+            <Link href="/" className="flex items-center space-x-2 group mb-3">
+              <Flower2 className="h-7 w-7 text-teal-base transition-transform group-hover:rotate-12" />
+              <span className="font-heading text-2xl font-bold tracking-tight text-teal-dark">
+                Buddas <span className="text-brown">Catering</span>
+              </span>
+            </Link>
+            <p className="text-brown/50 text-[10px] uppercase tracking-[0.2em] font-bold">Pleasant Grove, Utah</p>
+          </div>
+
+          {/* Quick Links Horizontal */}
+          <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 px-4">
+            {["Menu", "How It Works", "FAQ", "Memberships"].map((item) => (
+              <Link 
+                key={item} 
+                href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
+                className="text-sm font-bold text-brown/90 hover:text-teal-base transition-colors tracking-tight"
+              >
+                {item}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Minimal Contact & Socials */}
+          <div className="flex flex-col items-center space-y-6">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-widest text-brown/30 font-bold mb-1">Text for Support</span>
+              <a href={phone ? `tel:${phone.replace(/\D/g, '')}` : "#"} className="text-xl font-heading font-bold text-teal-dark tracking-tight">
+                {phone || "801.123.4567"}
+              </a>
+            </div>
+            
+            <div className="flex gap-6">
+              {[Instagram, Facebook, Linkedin].map((Icon, i) => (
+                <a key={i} href="#" className="p-2 text-brown/40 hover:text-teal-base transition-colors" aria-label={`Social ${i}`}>
+                  <Icon className="h-5 w-5" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Copyright & Safe-Area */}
+          <div className="pt-8 border-t border-gray-border/20 w-full flex flex-col items-center space-y-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+            <p className="text-[10px] text-brown/40 font-medium">
+              © {year} Buddas Hawaiian Bakery & Grill.
+            </p>
+            <div className="flex gap-4 text-[10px] text-brown/40 font-bold uppercase tracking-wider">
+              <Link href="/privacy">Privacy</Link>
+              <span>•</span>
+              <Link href="/terms">Terms</Link>
+            </div>
+          </div>
         </div>
+
       </div>
     </footer>
   );
