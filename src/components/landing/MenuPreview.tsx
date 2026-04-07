@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, ShoppingCart, Plus, Utensils, MoveRight } from "lucide-react";
+import { ArrowRight, ShoppingCart, Plus, Utensils, MoveRight, Users, Clock, Flame } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,9 @@ interface MenuItem {
   selectionItems?: string[];
   badge?: string;
   type?: "product" | "info";
+  prepTime?: string;
+  servings?: string;
+  spiceLevel?: "Mild" | "Medium" | "Hot";
 }
 
 interface MenuPreviewProps {
@@ -43,22 +46,31 @@ const MOCK_ITEMS: MenuItem[] = [
     name: "The Luau Feast",
     category: { title: "Packages", slug: { current: "packages" }, type: "both" },
     badge: "MOST POPULAR",
-    price: "$24.50/pp",
+    price: "$24.50",
     description: "Our comprehensive island experience including Kalua pork, huli huli chicken, and signature sides.",
+    servings: "12-15",
+    prepTime: "45m",
+    spiceLevel: "Mild"
   },
   {
     _id: "2",
     name: "Pacific Bowl Bar",
     category: { title: "Build-Your-Own", slug: { current: "build-your-own" }, type: "both" },
-    price: "$18.00/pp",
+    price: "$18.00",
     description: "Customizable fresh seafood and vegan options.",
+    servings: "10+",
+    prepTime: "30m",
+    spiceLevel: "Medium"
   },
   {
     _id: "3",
     name: "Tropical Fruit Tray",
     category: { title: "Add-ons", slug: { current: "add-ons" }, type: "both" },
-    price: "$65.00 flat rate",
+    price: "$65.00",
     description: "Seasonal Peak-season pineapple, papaya, mango and lychee.",
+    servings: "8-10",
+    prepTime: "15m",
+    spiceLevel: "Mild"
   },
   {
     _id: "4",
@@ -150,8 +162,8 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           className={cn(
-            "flex overflow-x-auto pb-8 gap-4 px-4 snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: 16px Grid Margin
-            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none" // Desktop: Grid
+            "flex overflow-x-auto pb-8 gap-4 px-4 snap-x snap-mandatory scrollbar-hide hide-scrollbar", 
+            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none"
           )}
         >
           {displayItems.map((item, idx) => (
@@ -160,12 +172,9 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
               data-index={idx}
               variants={itemVariants}
               className={cn(
-                "group relative rounded-[2rem] overflow-hidden transition-all duration-500",
-                "w-[85vw] md:w-auto snap-start shrink-0 tracking-normal border border-white/5 backdrop-blur-[2px]", // Mobile: 85vw Card Sizing & Standard Grid Snap Start
-                idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[400px] md:h-auto" : "h-[400px] md:h-auto",
-                idx === 1 ? "lg:col-span-2 lg:row-span-1" : "",
-                idx === 2 ? "lg:col-span-1 lg:row-span-1" : "",
-                idx === 3 ? "lg:col-span-1 lg:row-span-1" : "",
+                "group relative rounded-[2.5rem] overflow-hidden transition-all duration-500 shadow-xl",
+                "w-[85vw] md:w-auto snap-start shrink-0 tracking-normal border border-white/10 backdrop-blur-[2px]", 
+                idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[520px] md:h-auto" : "h-[520px] md:h-auto",
                 item.type === "info" ? "bg-white border border-gray-border/50" : "bg-teal-dark"
               )}
             >
@@ -184,13 +193,13 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
                       "w-full h-full bg-gradient-to-br transition-colors duration-700",
                       idx === 0 ? "from-teal-dark to-[#0F1D1D]" : "from-teal-dark/90 to-teal-dark"
                     )}>
-                      {/* Subtlest watermark */}
                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] scale-150 rotate-12">
                          <Utensils className="w-96 h-96 text-white" />
                       </div>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-70 transition-opacity"></div>
+                  {/* Cinematic Mobile Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 transition-opacity"></div>
                 </div>
               )}
 
@@ -210,28 +219,7 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
                            <p className="text-brown/60 text-sm leading-relaxed">
                               {item.description}
                           </p>
-                          
-                          {item.inclusionsSummary && (
-                            <p className="text-brown/40 text-xs mt-2 italic">
-                              {item.inclusionsSummary}
-                            </p>
-                          )}
-
-                          {item.selectionItems && item.selectionItems.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                              <p className="text-[10px] font-bold text-orange tracking-widest uppercase mb-1">
-                                {item.selectionTitle || "Choose from"}
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {item.selectionItems.map((opt, i) => (
-                                  <span key={i} className="text-[10px] bg-gray-100 text-brown/70 border border-gray-200 rounded-md px-2 py-0.5 whitespace-nowrap">
-                                    {opt}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                       </div>
+                        </div>
                      </div>
                      <Link href="/contact" className="group/link flex items-center justify-between py-2 border-t border-gray-border/50 text-teal-base font-bold transition-colors hover:text-teal-dark">
                         Inquire Now
@@ -247,39 +235,63 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
                            </Badge>
                          )}
                          <h3 className={cn(
-                           "font-bold text-white tracking-tight",
-                           idx === 0 ? "text-2xl md:text-5xl" : "text-xl md:text-3xl"
+                           "font-bold text-white tracking-tight leading-[1.1]",
+                           "text-3xl md:text-5xl" 
                          )}>
                             {item.name}
                          </h3>
                          <p className={cn(
-                           "text-white/70 leading-relaxed max-w-sm",
-                           idx === 0 ? "text-sm md:text-lg" : "text-xs md:text-sm"
+                           "text-white/60 leading-relaxed max-w-sm",
+                           "text-sm md:text-lg"
                          )}>
                             {item.description}
                          </p>
                       </div>
 
-                        <div className="flex items-center justify-between pt-5 border-t border-white/10 mt-auto">
+                      {/* Premium Metadata Row (Mobile specific style) */}
+                      <div className="flex md:hidden items-center justify-between py-4 border-y border-white/10 text-white/50 text-xs font-bold uppercase tracking-wider">
+                         <div className="flex items-center gap-2">
+                            <Users className="w-3 h-3 text-teal-base" />
+                            <span>{item.servings || "10-12"} Servings</span>
+                         </div>
+                         <div className="w-px h-4 bg-white/10" />
+                         <div className="flex items-center gap-2">
+                            <Clock className="w-3 h-3 text-teal-base" />
+                            <span>{item.prepTime || "45m"} Prep</span>
+                         </div>
+                         <div className="w-px h-4 bg-white/10" />
+                         <div className="flex items-center gap-2">
+                            <Flame className="w-3 h-3 text-orange" />
+                            <span>{item.spiceLevel || "Mild"}</span>
+                         </div>
+                      </div>
+
+                      {/* Dual-Pill Action Row (Ref: Hill Guest House) */}
+                      <div className="flex items-center gap-3 mt-auto">
+                        {/* Price Capsule (Glassmorphic) */}
+                        <div className="flex flex-col px-5 h-[3.25rem] bg-white/10 border border-white/20 backdrop-blur-md rounded-full items-center justify-center shrink-0">
+                           <span className="text-white/40 text-[8px] font-bold tracking-widest uppercase leading-none mb-0.5">PER PERSON</span>
+                           <span className="text-white font-bold text-lg tracking-tight leading-none">{item.price}</span>
+                        </div>
+                        
+                        {/* Primary Action Pill */}
+                        <button className="h-[3.25rem] grow bg-white text-teal-dark hover:bg-orange hover:text-white rounded-full text-base font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                           SELECT PACKAGE
+                           <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Desktop Desktop Actions (Hidden on Mobile) */}
+                      <div className="hidden md:flex items-center justify-between pt-5 border-t border-white/10">
                            <div className="flex flex-col gap-1">
                               <span className="text-white/40 text-[9px] font-bold tracking-[0.15em] uppercase leading-none">Starting At</span>
-                              <span className="text-white font-bold text-xl md:text-2xl tracking-tight leading-none">{item.price}</span>
+                              <span className="text-white font-bold text-xl md:text-2xl tracking-tight leading-none">{item.price}/pp</span>
                            </div>
-                         
-                         {idx === 0 ? (
+                          
                            <Button className="bg-white text-teal-dark hover:bg-teal-base hover:text-white rounded-full px-5 md:px-8 h-12 md:h-12 text-sm font-bold shadow-xl flex items-center gap-2 md:gap-3 shrink-0">
-                              <ShoppingCart className="w-5 h-5 md:w-5 md:h-5" />
+                              <Plus className="w-5 h-5 md:w-5 md:h-5" />
                               Add
                            </Button>
-                         ) : idx === 1 ? (
-                           <button className="w-12 h-12 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white hover:text-teal-dark transition-all shrink-0">
-                              <Plus className="w-6 h-6 md:w-6 md:h-6" />
-                           </button>
-                         ) : (
-                           <Button variant="outline" className="border-white/20 text-white hover:bg-white hover:text-teal-dark rounded-xl h-11 px-4 text-xs font-bold bg-white/5 backdrop-blur-sm shrink-0">
-                              Quick Add
-                           </Button>
-                         )}
                       </div>
                    </div>
                  )}
