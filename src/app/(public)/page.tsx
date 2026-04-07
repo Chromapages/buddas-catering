@@ -22,8 +22,8 @@ export default async function LandingPage() {
       <Hero data={landingPage?.hero} />
       <MenuPreview items={menuItems} sectionData={landingPage?.menuPreview} />
       <CateringCards sectionData={landingPage?.occasions} />
-      <BuildYourPlatter sectionData={landingPage?.buildYourPlatter} />
       <HowItWorks sectionData={landingPage?.howItWorks} />
+      <BuildYourPlatter sectionData={landingPage?.buildYourPlatter} />
       <ProvenExcellence testimonials={testimonials} sectionData={landingPage?.trust} />
       <FAQ sectionData={landingPage?.faq} />
       <Suspense fallback={<div className="py-20 text-center text-brown/50">Loading form...</div>}>
