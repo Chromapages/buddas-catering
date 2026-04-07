@@ -190,17 +190,42 @@ export function ProvenExcellence({
           </div>
         </div>
 
-        {/* Corporate Trust Strip integrated at bottom of section */}
-        <div className="mt-20 lg:mt-24 pt-12 border-t border-teal-base/10">
+        {/* Corporate Trust Strip: Static on Desktop, Infinite Marquee on Mobile */}
+        <div className="mt-20 lg:mt-24 pt-12 border-t border-teal-base/10 px-4 md:px-0">
           <p className="text-[9px] font-bold text-brown/40 uppercase tracking-[0.4em] mb-12 text-center">
             The Choice of Utah's Top Engineering and HR Teams
           </p>
-          <div className="flex flex-wrap justify-between items-center gap-10 opacity-30 grayscale hover:grayscale-0 hover:opacity-60 transition-all duration-700 max-w-5xl mx-auto px-6">
-            {["PODIUM", "ENTRATA", "DOMO", "VIVINT", "QUALTRICS", "PODIUM"].map((logo, i) => (
-              <div key={`${logo}-${i}`} className="text-xl font-bold font-heading tracking-tighter text-teal-dark">
+          
+          {/* DESKTOP: Static Grid */}
+          <div className="hidden md:flex flex-wrap justify-between items-center gap-10 opacity-30 grayscale hover:grayscale-0 hover:opacity-60 transition-all duration-700 max-w-5xl mx-auto">
+            {["PODIUM", "ENTRATA", "DOMO", "VIVINT", "QUALTRICS"].map((logo) => (
+              <div key={logo} className="text-xl font-bold font-heading tracking-tighter text-teal-dark">
                 {logo}
               </div>
             ))}
+          </div>
+
+          {/* MOBILE: Infinite Marquee */}
+          <div className="md:hidden relative w-full overflow-hidden">
+            <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-cream to-transparent z-10" />
+            <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-cream to-transparent z-10" />
+            
+            <motion.div 
+              className="flex items-center gap-12 w-max opacity-20 grayscale"
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ 
+                duration: 20, 
+                repeat: Infinity, 
+                ease: "linear" 
+              }}
+            >
+              {/* Double the logos for seamless loop */}
+              {[...["PODIUM", "ENTRATA", "DOMO", "VIVINT", "QUALTRICS"], ...["PODIUM", "ENTRATA", "DOMO", "VIVINT", "QUALTRICS"]].map((logo, i) => (
+                <div key={`${logo}-${i}`} className="text-xl font-bold font-heading tracking-tighter text-teal-dark whitespace-nowrap">
+                  {logo}
+                </div>
+              ))}
+            </motion.div>
           </div>
         </div>
       </div>
