@@ -38,9 +38,9 @@ export function HowItWorks({ sectionData }: HowItWorksProps) {
   const subheadline = sectionData?.subheadline || "You focus on the meeting. We handle the feast.";
 
   return (
-    <section id="how-it-works" className="bg-cream py-24 relative overflow-hidden transition-colors duration-500">
-      <div className="container-rig relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-x-12 gap-y-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <section id="how-it-works" className="bg-cream py-16 md:py-20 lg:py-24 relative overflow-hidden transition-colors duration-500">
+      <div className="container-rig relative z-10 px-4 md:px-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-16 lg:mb-20 gap-x-12 gap-y-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
           <div className="space-y-4 max-w-3xl">
             <Badge variant="default" className="uppercase tracking-widest text-teal-base border-teal-base/30 bg-teal-base/5">
               {badge}
@@ -54,7 +54,7 @@ export function HowItWorks({ sectionData }: HowItWorksProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 lg:gap-12 relative">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 lg:gap-12 relative">
           {/* Desktop Horizontal Timeline Connector */}
           <div className="hidden md:block absolute top-[60px] left-[15%] right-[15%] h-0.5 bg-teal-base/10 z-0">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-teal-base/20 to-transparent" />
@@ -76,7 +76,7 @@ export function HowItWorks({ sectionData }: HowItWorksProps) {
 
               <div className="flex flex-row md:flex-col items-start md:items-center gap-6 md:gap-0">
                 <div className="relative mb-6">
-                  <div className="bg-white p-6 rounded-3xl shadow-lg border-4 border-teal-base/5 group-hover:border-teal-base/20 transition-all duration-300 relative z-10">
+                  <div className="bg-white p-4 sm:p-5 md:p-6 rounded-3xl shadow-lg border-4 border-teal-base/5 group-hover:border-teal-base/20 transition-all duration-300 relative z-10">
                     <step.icon className="w-10 h-10 text-teal-base group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div className="absolute -top-3 -right-3 bg-teal-dark text-white w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-sm border-2 border-white shadow-md z-20">
@@ -85,7 +85,7 @@ export function HowItWorks({ sectionData }: HowItWorksProps) {
                 </div>
 
                 <div className="text-left md:text-center mt-2 md:mt-0">
-                  <h3 className="text-xl md:text-2xl font-bold font-heading text-teal-dark mb-3 group-hover:text-teal-base transition-colors duration-300">
+                  <h3 className="text-xl md:text-2xl font-bold font-heading text-teal-dark mb-2 group-hover:text-teal-base transition-colors duration-300">
                     {step.title}
                   </h3>
                   <p className="text-brown/70 leading-relaxed max-w-[320px] md:mx-auto text-base md:text-lg">

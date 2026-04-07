@@ -46,9 +46,9 @@ export function FAQ({ sectionData }: FAQProps) {
   const subheadline = sectionData?.subheadline || "Everything you need to know about island-inspired catering for your team.";
 
   return (
-    <section id="faq" className="bg-cream py-24">
+    <section id="faq" className="bg-cream py-16 md:py-20 lg:py-24">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 md:mb-16">
           <h2 className="text-3xl md:text-5xl font-bold font-heading text-teal-dark mb-4">
             {headline}
           </h2>
@@ -70,7 +70,7 @@ export function FAQ({ sectionData }: FAQProps) {
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-base focus-visible:ring-inset"
+                  className="flex w-full items-center justify-between px-4 py-4 md:px-6 md:py-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-base focus-visible:ring-inset"
                   aria-expanded={isOpen}
                 >
                   <span className={`font-semibold text-lg font-heading ${isOpen ? 'text-teal-dark' : 'text-brown'}`}>
@@ -79,7 +79,7 @@ export function FAQ({ sectionData }: FAQProps) {
                   <ChevronDown className={`w-5 h-5 text-teal-base transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
                 <div 
-                  className={`px-6 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
+                  className={`px-4 md:px-6 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
                 >
                   <p className="text-brown/80 leading-relaxed">
                     {faq.answer}

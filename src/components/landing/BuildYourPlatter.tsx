@@ -75,21 +75,21 @@ export function BuildYourPlatter({ sectionData }: BuildYourPlatterProps) {
   };
 
   return (
-    <section className="bg-gray-bg py-24 lg:py-32 overflow-hidden relative">
+    <section className="bg-gray-bg py-16 md:py-20 lg:py-24 overflow-hidden relative">
       {/* Decorative background element */}
       <div className="absolute top-0 left-0 w-1/3 h-full bg-cream/30 skew-x-12 -translate-x-20 pointer-events-none"></div>
 
-      <div className="container-rig relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+      <div className="container-rig relative z-10 px-4 md:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 lg:gap-20 items-center">
           {/* Visual Area (Now Left) */}
-          <div className="relative pt-10 lg:pt-0">
+          <div className="relative pt-6 lg:pt-0">
             {/* The Plate Container */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, rotate: -5 }}
               whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
               viewport={{ once: true }}
               transition={{ type: "spring", stiffness: 60, damping: 15 }}
-              className="relative aspect-square max-w-[600px] mx-auto bg-white rounded-[4rem] shadow-[0_40px_80px_-15px_rgba(45,35,30,0.08)] p-16 flex items-center justify-center border border-white"
+              className="relative aspect-square max-w-[600px] mx-auto bg-white rounded-[2.5rem] md:rounded-[4rem] shadow-[0_40px_80px_-15px_rgba(45,35,30,0.08)] p-6 sm:p-10 md:p-16 flex items-center justify-center border border-white"
             >
               <div className="relative w-full h-full group">
                 <Image
@@ -102,7 +102,7 @@ export function BuildYourPlatter({ sectionData }: BuildYourPlatterProps) {
               </div>
 
               {/* Decorative accent behind the plate */}
-              <div className="absolute -inset-4 bg-gradient-to-tr from-orange/5 to-transparent rounded-[4.5rem] -z-10"></div>
+              <div className="absolute -inset-4 bg-gradient-to-tr from-orange/5 to-transparent rounded-[2.5rem] md:rounded-[4.5rem] -z-10"></div>
             </motion.div>
 
             {/* Floating Testimonial Card */}
@@ -111,21 +111,21 @@ export function BuildYourPlatter({ sectionData }: BuildYourPlatterProps) {
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.6, type: "spring", stiffness: 100, damping: 20 }}
-              className="absolute -bottom-8 -right-4 md:-right-8 max-w-[320px] bg-white rounded-[2rem] p-8 shadow-[0_30px_60px_-12px_rgba(45,35,30,0.15)] border border-gray-border/50 backdrop-blur-xl group hover:shadow-teal-base/5 transition-all duration-500 text-left"
+              className="absolute -bottom-6 -right-2 md:-bottom-8 md:-right-8 max-w-[280px] md:max-w-[320px] bg-white rounded-2xl md:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-[0_30px_60px_-12px_rgba(45,35,30,0.15)] border border-gray-border/50 backdrop-blur-xl group hover:shadow-teal-base/5 transition-all duration-500 text-left"
             >
-              <div className="space-y-5">
-                <div className="flex items-center gap-3">
+              <div className="space-y-4 md:space-y-5">
+                <div className="flex items-center gap-2 md:gap-3">
                   <div className="flex text-orange">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-current" />)}
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 md:w-5 md:h-5 fill-current" />)}
                   </div>
-                  <span className="text-base font-bold text-brown tracking-tight">4.9/5 Rating</span>
+                  <span className="text-sm md:text-base font-bold text-brown tracking-tight">4.9/5 Rating</span>
                 </div>
-                <p className="text-lg italic text-brown/80 leading-relaxed font-medium">
+                <p className="text-base md:text-lg italic text-brown/80 leading-relaxed font-medium">
                   {"“The easiest catering order I've ever made. The Kalua Pork was a huge hit!”"}
                 </p>
                 <div className="flex items-center gap-3 pt-1">
-                  <div className="w-8 h-[2px] bg-teal-base/30"></div>
-                  <p className="text-xs font-bold text-teal-base uppercase tracking-widest">
+                  <div className="w-6 md:w-8 h-[2px] bg-teal-base/30"></div>
+                  <p className="text-[10px] md:text-xs font-bold text-teal-base uppercase tracking-widest">
                     Sarah K., Google HQ
                   </p>
                 </div>
@@ -139,9 +139,9 @@ export function BuildYourPlatter({ sectionData }: BuildYourPlatterProps) {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="space-y-12"
+            className="space-y-8 md:space-y-12"
           >
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               <motion.div variants={itemVariants}>
                 <Badge className="bg-teal-base/10 text-teal-base hover:bg-teal-base/15 border-0 py-1.5 px-4 text-sm font-bold tracking-wider">
                   {badge}
@@ -155,23 +155,23 @@ export function BuildYourPlatter({ sectionData }: BuildYourPlatterProps) {
               </motion.p>
             </div>
 
-            <div className="space-y-10">
+            <div className="space-y-6 md:space-y-10">
               {steps.map((step, i) => (
-                <motion.div key={i} variants={itemVariants} className="flex gap-6 group">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white border border-gray-border text-teal-base font-bold flex items-center justify-center text-xl shadow-sm group-hover:border-teal-base/50 group-hover:shadow-md transition-all duration-300">
+                <motion.div key={i} variants={itemVariants} className="flex gap-4 md:gap-6 group">
+                  <div className="flex-shrink-0 w-10 md:w-12 h-10 md:h-12 rounded-xl md:rounded-2xl bg-white border border-gray-border text-teal-base font-bold flex items-center justify-center text-lg md:text-xl shadow-sm group-hover:border-teal-base/50 group-hover:shadow-md transition-all duration-300">
                     {step.number}
                   </div>
-                  <div className="space-y-2 pt-1">
-                    <h3 className="text-2xl font-bold text-brown">{step.title}</h3>
-                    {step.description && <p className="text-lg text-brown/60 font-medium">{step.description}</p>}
+                  <div className="space-y-2 pt-0.5 md:pt-1">
+                    <h3 className="text-xl md:text-2xl font-bold text-brown">{step.title}</h3>
+                    {step.description && <p className="text-base md:text-lg text-brown/60 font-medium">{step.description}</p>}
                     {step.content}
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            <motion.div variants={itemVariants} className="pt-6">
-              <Button size="lg" className="h-16 px-12 text-xl bg-teal-base hover:bg-teal-dark shadow-2xl shadow-teal-base/30 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]" asChild>
+            <motion.div variants={itemVariants} className="pt-4 md:pt-6">
+              <Button size="lg" className="h-14 md:h-16 px-10 md:px-12 text-lg md:text-xl bg-teal-base hover:bg-teal-dark shadow-2xl shadow-teal-base/30 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]" asChild>
                 <Link href="#book">START CUSTOM ORDER</Link>
               </Button>
             </motion.div>

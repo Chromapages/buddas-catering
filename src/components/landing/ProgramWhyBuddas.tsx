@@ -35,13 +35,13 @@ const POINTS = [
 
 export function ProgramWhyBuddas() {
   return (
-    <section className="bg-teal-dark py-20 lg:py-28">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
+    <section className="bg-teal-dark py-16 md:py-20 lg:py-24">
+      <div className="max-w-6xl mx-auto px-4 md:px-6">
+        <div className="text-center mb-10 md:mb-14">
           <span className="text-sm font-bold text-teal-base uppercase tracking-widest">
             Why Buddas
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-heading font-bold text-white">
+          <h2 className="mt-3 text-3xl sm:text-4xl font-heading font-bold text-white leading-tight">
             Food your group will actually look forward to
           </h2>
         </div>
@@ -50,16 +50,16 @@ export function ProgramWhyBuddas() {
           {POINTS.map(({ icon: Icon, title, description }) => (
             <div
               key={title}
-              className="flex gap-4 bg-white/8 border border-white/10 rounded-2xl p-6 hover:bg-white/12 transition-colors"
+              className="flex gap-4 bg-white/8 border border-white/10 rounded-2xl p-4 sm:p-5 md:p-6 hover:bg-white/12 transition-colors"
             >
               <div className="shrink-0 w-10 h-10 rounded-xl bg-teal-base/20 flex items-center justify-center mt-0.5">
                 <Icon className="w-5 h-5 text-teal-base" />
               </div>
-              <div>
-                <h3 className="font-heading font-bold text-white text-base mb-1.5">
+              <div className="space-y-1.5 pt-0.5">
+                <h3 className="font-heading font-bold text-white text-base md:text-lg leading-tight">
                   {title}
                 </h3>
-                <p className="text-sm text-white/60 leading-relaxed">
+                <p className="text-sm text-white/60 leading-relaxed font-medium">
                   {description}
                 </p>
               </div>
@@ -67,13 +67,13 @@ export function ProgramWhyBuddas() {
           ))}
 
           {/* CTA card fills the 6th spot */}
-          <div className="flex flex-col items-center justify-center bg-orange/15 border border-orange/30 rounded-2xl p-6 text-center">
-            <p className="text-white font-bold text-base mb-4">
+          <div className="flex flex-col items-center justify-center bg-orange/15 border border-orange/30 rounded-2xl p-4 sm:p-5 md:p-6 text-center group">
+            <p className="text-white font-bold text-base mb-4 group-hover:text-orange transition-colors duration-300">
               Ready to lock in your discount?
             </p>
             <a
               href="#signup"
-              className="inline-flex items-center justify-center px-6 py-3 bg-orange text-white font-bold rounded-xl hover:bg-orange/90 transition-colors text-sm"
+              className="inline-flex items-center justify-center px-6 min-h-[44px] bg-orange text-white font-bold rounded-xl hover:bg-orange/90 transition-all hover:scale-[1.02] text-sm md:text-base shadow-lg shadow-orange/20"
             >
               Join the Program
             </a>

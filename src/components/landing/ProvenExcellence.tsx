@@ -79,19 +79,19 @@ export function ProvenExcellence({
   }, [testimonials.length]);
 
   return (
-    <section className="bg-cream py-24 lg:py-32 border-y border-teal-base/10 overflow-hidden" id="trust">
-      <div className="container-rig">
-        <div className="text-right mb-16 lg:mb-20 px-4 md:px-0">
+    <section className="bg-cream py-16 md:py-20 lg:py-24 border-y border-teal-base/10 overflow-hidden" id="trust">
+      <div className="container-rig px-4 md:px-6">
+        <div className="text-right mb-10 md:mb-16 lg:mb-20 px-4 md:px-0">
           <p className="text-xs font-bold text-orange uppercase tracking-[0.3em] mb-4">{badge}</p>
           <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold font-heading text-teal-dark tracking-tighter">
             {headline}
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-12">
           
           {/* Main Block (Testimonials & Imagery) - 2 Columns wide */}
-          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 bg-white/40 backdrop-blur-sm rounded-[3rem] p-8 lg:p-12 border border-white/60 shadow-xl shadow-teal-dark/5">
+          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 bg-white/40 backdrop-blur-sm rounded-[3rem] p-4 sm:p-5 md:p-8 lg:p-12 border border-white/60 shadow-xl shadow-teal-dark/5">
             
             {/* Left side of block: Carousel */}
             <div className="relative flex flex-col justify-center min-h-[300px]">
@@ -155,7 +155,7 @@ export function ProvenExcellence({
 
           {/* Side Block (The Promises) - 1 Column wide */}
           <div className="flex flex-col gap-6">
-            <div className="p-6 pb-2">
+            <div className="p-4 sm:p-5 md:p-6 pb-2">
                 <h3 className="text-sm font-bold text-teal-dark uppercase tracking-[0.2em] opacity-80 border-l-2 border-orange pl-4">
                     Our Promises
                 </h3>

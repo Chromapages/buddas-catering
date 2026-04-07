@@ -96,7 +96,7 @@ export function LeadForm({ sectionData }: LeadFormProps) {
 
   if (isSuccess) {
     return (
-      <section id="book" className="bg-cream py-24 border-t border-gray-border">
+      <section id="book" className="bg-cream py-16 md:py-20 lg:py-24 border-t border-gray-border">
         <div className="mx-auto max-w-4xl px-4 md:px-6">
           <SuccessState onReset={() => { setIsSuccess(false); setStep(1); }} />
         </div>
@@ -105,8 +105,8 @@ export function LeadForm({ sectionData }: LeadFormProps) {
   }
 
   return (
-    <section id="book" className="bg-cream py-24 border-t border-gray-border overflow-hidden">
-      <div className="container-rig">
+    <section id="book" className="bg-cream py-16 md:py-20 lg:py-24 border-t border-gray-border overflow-hidden">
+      <div className="container-rig px-4 md:px-6">
         <div className="flex flex-col lg:flex-row gap-12 items-start">
           
           {/* Left Side: Context & Trust */}
@@ -146,10 +146,10 @@ export function LeadForm({ sectionData }: LeadFormProps) {
           </div>
 
           <div className="w-full lg:w-2/3">
-            <div className="bg-white p-4 md:p-10 rounded-2xl md:rounded-3xl shadow-xl border border-gray-border relative">
+            <div className="bg-white p-4 sm:p-6 md:p-10 rounded-2xl md:rounded-3xl shadow-xl border border-gray-border relative">
               
               {/* Step Progress Bar */}
-              <div className="flex items-center justify-between mb-10 px-2">
+              <div className="flex items-center justify-between mb-8 md:mb-10 px-2">
                 <div className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => step > 1 && setStep(1)}>
                   <div className={cn(
                     "h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
@@ -177,11 +177,11 @@ export function LeadForm({ sectionData }: LeadFormProps) {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 md:space-y-8">
                 
                 {/* STEP 1: EVENT SCOPE */}
                 {step === 1 && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-teal-dark uppercase tracking-tight">Event Type <span className="text-orange">*</span></label>
@@ -270,8 +270,8 @@ export function LeadForm({ sectionData }: LeadFormProps) {
 
                 {/* STEP 2: CONTACT & DETAILS */}
                 {step === 2 && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-teal-dark uppercase tracking-tight">Full Name <span className="text-orange">*</span></label>
                         <Input 

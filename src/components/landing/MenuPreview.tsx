@@ -135,9 +135,9 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
   };
 
   return (
-    <section className="py-24 bg-[#F8F7F4] relative overflow-hidden" id="menu">
-      <div className="max-w-[1600px] mx-auto px-6 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+    <section className="py-16 md:py-20 lg:py-24 bg-[#F8F7F4] relative overflow-hidden" id="menu">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-6 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6">
           <div className="space-y-4">
              <Badge className="bg-teal-base/10 text-teal-base border-teal-base/20 py-1.5 px-4 font-bold tracking-wider">
                {badge}

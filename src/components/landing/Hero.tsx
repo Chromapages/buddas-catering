@@ -70,7 +70,7 @@ export function Hero({ data }: HeroProps) {
   };
 
   return (
-    <section className="relative min-h-[100svh] flex items-end pb-36 pt-24 md:pb-0 md:items-center overflow-hidden py-12 md:py-24">
+    <section className="relative min-h-[100svh] flex items-end pb-36 pt-24 md:pb-0 md:items-center overflow-hidden py-16 md:py-20 lg:py-24">
       {/* Full-Bleed Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -85,14 +85,14 @@ export function Hero({ data }: HeroProps) {
         <div className="absolute inset-0 bg-teal-dark/10 mix-blend-multiply"></div>
       </div>
 
-      <div className="container relative z-10 px-4">
+      <div className="container relative z-10 px-4 md:px-6">
         <motion.div 
-          className="max-w-2xl bg-white/5 backdrop-blur-md border border-white/20 p-5 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl"
+          className="max-w-2xl bg-white/5 backdrop-blur-md border border-white/20 p-4 sm:p-6 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <motion.div variants={itemVariants} className="inline-flex items-center">
               <Badge variant="warning" className="bg-orange/90 text-white border-0 py-1.5 px-4 tracking-widest flex gap-2">
                 <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
@@ -124,7 +124,7 @@ export function Hero({ data }: HeroProps) {
               </Button>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/10">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 pt-6 border-t border-white/10">
               {features.map((feature, i) => (
                 <div key={i} className="flex items-center gap-3 text-white/90 font-bold text-sm sm:text-base">
                   <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-teal-base shrink-0" />
@@ -135,8 +135,6 @@ export function Hero({ data }: HeroProps) {
           </div>
         </motion.div>
       </div>
-
-
     </section>
   );
 }
