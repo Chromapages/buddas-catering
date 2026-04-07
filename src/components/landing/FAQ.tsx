@@ -46,9 +46,9 @@ export function FAQ({ sectionData }: FAQProps) {
   const subheadline = sectionData?.subheadline || "Everything you need to know about island-inspired catering for your team.";
 
   return (
-    <section id="faq" className="bg-cream pt-8 pb-16 md:pt-12 md:pb-20 lg:pt-16 lg:pb-24">
+    <section id="faq" className="bg-cream pt-8 pb-4 md:pt-12 md:pb-10 lg:pt-16 lg:pb-12">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
-        <div className="text-center mb-10 md:mb-16">
+        <div className="text-center mb-10 md:mb-10">
           <h2 className="text-3xl md:text-5xl font-bold font-heading text-teal-dark mb-4">
             {headline}
           </h2>
@@ -90,7 +90,7 @@ export function FAQ({ sectionData }: FAQProps) {
           })}
         </div>
 
-        <div className="mt-16 text-center">
+        <div className="mt-10 text-center">
           <p className="text-brown/60 mb-2">Still have questions?</p>
           <Link href="#book" className="text-teal-base font-bold hover:underline">
             Chat with a catering specialist →
