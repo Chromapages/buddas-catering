@@ -150,8 +150,8 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           className={cn(
-            "flex overflow-x-auto pb-8 gap-4 px-[7.5vw] snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: Carousel with centered snapping padding
-            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:snap-none" // Desktop: Grid
+            "flex overflow-x-auto pb-8 gap-4 px-8 snap-x snap-mandatory scrollbar-hide hide-scrollbar", // Mobile: Carousel with centered snapping padding
+            "md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-6 md:auto-rows-[300px] md:overflow-visible md:px-0 md:mx-0 md:snap-none" // Desktop: Grid
           )}
         >
           {displayItems.map((item, idx) => (
@@ -161,7 +161,7 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
               variants={itemVariants}
               className={cn(
                 "group relative rounded-[2rem] overflow-hidden transition-all duration-500",
-                "w-[85vw] md:w-auto snap-center shrink-0 tracking-normal", // Mobile: 85vw Card Sizing & Apple Snap
+                "w-[78vw] md:w-auto snap-center shrink-0 tracking-normal border border-white/5 backdrop-blur-[2px]", // Mobile: 78vw Card Sizing & Apple Snap
                 idx === 0 ? "lg:col-span-2 lg:row-span-2 md:h-full h-[400px] md:h-auto" : "h-[400px] md:h-auto",
                 idx === 1 ? "lg:col-span-2 lg:row-span-1" : "",
                 idx === 2 ? "lg:col-span-1 lg:row-span-1" : "",
@@ -260,11 +260,11 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
                          </p>
                       </div>
 
-                       <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-auto">
-                          <div className="flex flex-col">
-                             <span className="text-white/50 text-[10px] font-bold tracking-widest uppercase mb-0.5">{item.priceTitle || "Price"}</span>
-                             <span className="text-white font-bold text-xl md:text-2xl tracking-tight leading-none">{item.price}</span>
-                          </div>
+                        <div className="flex items-center justify-between pt-5 border-t border-white/10 mt-auto">
+                           <div className="flex flex-col gap-1">
+                              <span className="text-white/40 text-[9px] font-bold tracking-[0.15em] uppercase leading-none">Starting At</span>
+                              <span className="text-white font-bold text-xl md:text-2xl tracking-tight leading-none">{item.price}</span>
+                           </div>
                          
                          {idx === 0 ? (
                            <Button className="bg-white text-teal-dark hover:bg-teal-base hover:text-white rounded-full px-5 md:px-8 h-12 md:h-12 text-sm font-bold shadow-xl flex items-center gap-2 md:gap-3 shrink-0">
@@ -309,18 +309,18 @@ export function MenuPreview({ items = [], sectionData }: MenuPreviewProps) {
         </div>
 
         {/* Global CTA */}
-        <div className="mt-16 text-center px-4 md:px-0">
-           <Button 
-             size="lg" 
-             className="w-full max-w-md md:w-auto h-16 px-6 md:px-12 text-base md:text-lg bg-teal-dark hover:bg-teal-base shadow-2xl shadow-teal-dark/10 rounded-2xl group transition-all" 
-             asChild
-           >
-             <Link href="/menu" className="flex items-center justify-center gap-2 md:gap-3">
-               EXPLORE FULL MENU
-               <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 transition-transform" />
-             </Link>
-           </Button>
-        </div>
+         <div className="mt-16 text-center px-4 md:px-0">
+            <Button 
+              size="lg" 
+              className="w-auto h-14 px-10 text-base md:text-lg bg-teal-dark hover:bg-teal-base shadow-2xl shadow-teal-dark/10 rounded-2xl group transition-all" 
+              asChild
+            >
+              <Link href="/menu" className="flex items-center justify-center gap-3">
+                EXPLORE FULL MENU
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </Button>
+         </div>
       </div>
     </section>
   );
