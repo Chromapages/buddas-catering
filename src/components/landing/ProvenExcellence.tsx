@@ -79,7 +79,7 @@ export function ProvenExcellence({
   }, [testimonials.length]);
 
   return (
-    <section className="bg-cream py-16 md:py-20 lg:py-24 border-y border-teal-base/10 overflow-hidden" id="trust">
+    <section className="bg-cream pt-16 pb-8 md:pt-20 md:pb-12 lg:pt-24 lg:pb-16 border-y border-teal-base/10 overflow-hidden" id="trust">
       <div className="container-rig px-4 md:px-6">
         <div className="text-right mb-10 md:mb-16 lg:mb-20 px-4 md:px-0">
           <p className="text-xs font-bold text-orange uppercase tracking-[0.3em] mb-4">{badge}</p>
@@ -191,7 +191,7 @@ export function ProvenExcellence({
         </div>
 
         {/* Corporate Trust Strip: Static on Desktop, Infinite Marquee on Mobile */}
-        <div className="mt-20 lg:mt-24 pt-12 border-t border-teal-base/10 px-4 md:px-0">
+        <div className="mt-10 lg:mt-24 pt-12 border-t border-teal-base/10 px-4 md:px-0">
           <p className="text-[9px] font-bold text-brown/40 uppercase tracking-[0.4em] mb-12 text-center">
             The Choice of Utah's Top Engineering and HR Teams
           </p>

@@ -46,7 +46,7 @@ export function FAQ({ sectionData }: FAQProps) {
   const subheadline = sectionData?.subheadline || "Everything you need to know about island-inspired catering for your team.";
 
   return (
-    <section id="faq" className="bg-cream py-16 md:py-20 lg:py-24">
+    <section id="faq" className="bg-cream pt-8 pb-16 md:pt-12 md:pb-20 lg:pt-16 lg:pb-24">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
         <div className="text-center mb-10 md:mb-16">
           <h2 className="text-3xl md:text-5xl font-bold font-heading text-teal-dark mb-4">
