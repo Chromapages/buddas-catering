@@ -170,15 +170,19 @@ export async function getRepTasksByStatus(repId: string): Promise<{
 /**
  * Fetches tasks for a specific entity (Lead, Company, etc.).
  */
-export async function getTasksByEntity(entityType: string, entityId: string) {
+export async function getTasksByEntity(entityType: string, entityId: string, userId?: string, userRole?: string) {
   try {
     const tasksRef = collection(db, COLLECTION_NAME);
-    const q = query(
+    let q = query(
       tasksRef,
       where("entityType", "==", entityType),
       where("entityId", "==", entityId),
       orderBy("dueDate", "desc")
     );
+
+    if (userRole === "rep" && userId) {
+      q = query(q, where("assignedRepId", "==", userId));
+    }
 
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({

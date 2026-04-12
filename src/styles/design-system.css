@@ -1,0 +1,57 @@
+@layer base {
+  :root {
+    /* Spacing & Rhythm (Swiss 8px Grid) */
+    --s-2xs: 4px;
+    --s-xs: 8px;
+    --s-sm: 16px;
+    --s-md: 24px;
+    --s-lg: 32px;
+    --s-xl: 48px;
+    --s-2xl: 64px;
+    
+    /* Global Radius */
+    --r-component: 12px;
+    --r-container: 24px;
+
+    /* Color Palette: Fresh Kitchen (Soft Precision) */
+    --c-chef-white: #FFFFFF;
+    --c-chef-prep: #FAFAF7;
+    --c-chef-charcoal: #1A1C1B;
+    --c-chef-muted: #626462;     /* Optimized for AA Contrast on White */
+    --c-chef-surface-raised: #FFFFFF;
+    
+    /* Accents (Appetizing Tech) */
+    --c-accent-heat: #D1653B;    /* Optimized for AA Contrast on White */
+    --c-accent-fresh: #0D7377;   /* Freshness / Success */
+    --c-accent-caution: #F2D682; /* Caution / Pending */
+    
+    /* Elevation (Soft UI Shadows) */
+    --shadow-soft-low: 0 1px 2px rgba(26, 28, 27, 0.02);
+    --shadow-soft-mid: 0 4px 12px rgba(26, 28, 27, 0.05);
+    --shadow-soft-high: 0 12px 24px rgba(26, 28, 27, 0.08);
+    
+    /* Typography */
+    --f-heading-system: 'Poppins', sans-serif;
+    --f-body-system: 'Inter', sans-serif;
+    --f-mono-system: 'Space Mono', 'Fira Code', monospace;
+  }
+}
+
+@theme {
+  --color-chef-white: var(--c-chef-white);
+  --color-chef-prep: var(--c-chef-prep);
+  --color-chef-charcoal: var(--c-chef-charcoal);
+  --color-chef-muted: var(--c-chef-muted);
+  
+  --color-accent-heat: var(--c-accent-heat);
+  --color-accent-fresh: var(--c-accent-fresh);
+  --color-accent-caution: var(--c-accent-caution);
+  
+  --shadow-soft-low: var(--shadow-soft-low);
+  --shadow-soft-mid: var(--shadow-soft-mid);
+  --shadow-soft-high: var(--shadow-soft-high);
+  
+  --font-heading: var(--f-heading-system);
+  --font-body: var(--f-body-system);
+  --font-mono: var(--f-mono-system);
+}

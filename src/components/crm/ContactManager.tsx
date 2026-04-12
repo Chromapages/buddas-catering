@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Contact } from "@/types/crm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
 import { Button } from "@/components/shared/Button";
@@ -73,142 +74,148 @@ export function ContactManager({ companyId, contacts, onUpdate }: ContactManager
   };
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 bg-gray-bg/50">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-teal-base" />
-          <CardTitle className="text-lg">Stakeholders</CardTitle>
+    <Card className="border border-teal-dark/10 shadow-glass backdrop-blur-3xl overflow-hidden rounded-[24px] bg-white/40">
+      <CardHeader className="flex flex-row items-center justify-between pb-6 border-b border-teal-dark/10 bg-white/5 p-8">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-teal-base/10 border border-teal-base/20 flex items-center justify-center">
+            <Users className="w-5 h-5 text-teal-base" />
+          </div>
+          <CardTitle className="text-[12px] font-black uppercase tracking-[0.3em] text-teal-dark">Stakeholder Protocol</CardTitle>
         </div>
         <Button 
           variant="ghost" 
           size="sm" 
-          className="h-8 px-2 text-teal-base hover:text-teal-dark"
+          className="h-9 px-4 text-[10px] font-black uppercase tracking-widest text-teal-base hover:bg-teal-base/10 rounded-xl transition-all"
           onClick={() => setIsAdding(!isAdding)}
         >
-          {isAdding ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4 mr-1" />}
-          {isAdding ? "Cancel" : "Add Contact"}
+          {isAdding ? <X className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+          {isAdding ? "Abort" : "Add Stakeholder"}
         </Button>
       </CardHeader>
-      <CardContent className="pt-4 space-y-4">
+      <CardContent className="p-8 space-y-6">
         {isAdding && (
-          <form onSubmit={handleCreate} className="p-4 bg-teal-base/5 rounded-xl border border-teal-base/10 space-y-3 mb-4 animate-in fade-in slide-in-from-top-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-brown/50">Full Name</label>
+          <form onSubmit={handleCreate} className="p-6 bg-teal-dark/5 rounded-2xl border border-teal-dark/10 space-y-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-500 shadow-glass">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-teal-dark/40 ml-1">Registry Name</label>
                 <Input 
                   required 
                   placeholder="Jane Doe" 
                   value={form.fullName} 
                   onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} 
-                  className="h-9 text-sm"
+                  className="bg-white/5 border-teal-dark/10 text-teal-dark rounded-xl h-11 focus:border-teal-base text-xs font-black uppercase tracking-widest placeholder:text-teal-dark/20"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-brown/50">Title</label>
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-teal-dark/40 ml-1">Designation</label>
                 <Input 
                   placeholder="Catering Director" 
                   value={form.title} 
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  className="h-9 text-sm"
+                  className="bg-white/5 border-teal-dark/10 text-teal-dark rounded-xl h-11 focus:border-teal-base text-xs font-black uppercase tracking-widest placeholder:text-teal-dark/20"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-brown/50">Email</label>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-teal-dark/40 ml-1">Comms Email</label>
                 <Input 
                   required 
                   type="email" 
                   placeholder="jane@company.com" 
                   value={form.email} 
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="h-9 text-sm"
+                  className="bg-white/5 border-teal-dark/10 text-teal-dark rounded-xl h-11 focus:border-teal-base text-xs font-black uppercase tracking-widest placeholder:text-teal-dark/20"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-brown/50">Phone</label>
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-teal-dark/40 ml-1">Contact Line</label>
                 <Input 
                   placeholder="(555) 000-0000" 
                   value={form.phone} 
                   onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  className="h-9 text-sm"
+                  className="bg-white/5 border-teal-dark/10 text-teal-dark rounded-xl h-11 focus:border-teal-base text-xs font-black uppercase tracking-widest placeholder:text-teal-dark/20"
                 />
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-brown/50">Role in Decision</label>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black uppercase tracking-[0.2em] text-teal-dark/40 ml-1">Protocol Role</label>
               <select 
-                className="w-full h-9 rounded-lg border border-gray-border bg-white px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal-base/20"
+                className="w-full h-11 rounded-xl border border-teal-dark/10 bg-white/5 px-4 text-xs font-black uppercase tracking-widest text-teal-dark focus:outline-none focus:ring-2 focus:ring-teal-base/20 transition-all appearance-none cursor-pointer"
                 value={form.role}
                 onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
               >
-                <option>Decision Maker</option>
-                <option>Influencer</option>
-                <option>Billing/Finance</option>
-                <option>On-site Coordinator</option>
-                <option>Administrative</option>
+                <option className="bg-white text-teal-dark">Decision Maker</option>
+                <option className="bg-white text-teal-dark">Influencer</option>
+                <option className="bg-white text-teal-dark">Billing/Finance</option>
+                <option className="bg-white text-teal-dark">On-site Coordinator</option>
+                <option className="bg-white text-teal-dark">Administrative</option>
               </select>
             </div>
-            <div className="flex justify-end pt-2">
-              <Button type="submit" size="sm" disabled={loading}>
+            <div className="flex justify-end pt-4 border-t border-teal-dark/10">
+              <Button type="submit" size="sm" disabled={loading} className="bg-teal-base hover:bg-teal-base/80 text-teal-dark h-11 px-8 rounded-xl font-black uppercase tracking-widest text-[10px]">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserPlus className="w-4 h-4 mr-2" />}
-                Save Contact
+                Sync Stakeholder
               </Button>
             </div>
           </form>
         )}
 
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-4">
           {contacts.map((contact) => (
             <div 
               key={contact.id} 
-              className={`group relative p-4 rounded-xl border transition-all ${
+              className={cn(
+                "group relative p-6 rounded-2xl border backdrop-blur-md transition-all duration-300",
                 contact.isPrimary 
-                  ? "bg-teal-base/5 border-teal-base/20 shadow-sm" 
-                  : "bg-white border-gray-border hover:border-brown/20"
-              }`}
+                  ? "bg-teal-base/10 border-teal-base/20 shadow-glass" 
+                  : "bg-teal-dark/5 border-teal-dark/5 hover:bg-teal-dark/10 hover:border-teal-dark/10"
+              )}
             >
-              <div className="flex justify-between items-start gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-brown">{contact.fullName}</span>
-                    {contact.isPrimary && (
-                      <Badge variant="success" className="text-[9px] h-4 py-0 flex items-center gap-0.5">
-                        <Check className="w-2.5 h-2.5" /> Primary
-                      </Badge>
-                    )}
-                    <span className="text-[10px] font-medium text-brown/40 bg-gray-bg px-1.5 py-0.5 rounded uppercase tracking-tighter">
-                      {contact.role || contact.title || "Contact"}
-                    </span>
+              <div className="flex justify-between items-center gap-6">
+                <div className="flex-1 flex items-center gap-6">
+                  <div className="h-12 w-12 rounded-2xl bg-teal-dark/5 border border-teal-dark/10 flex items-center justify-center shrink-0">
+                    <Star className={cn("h-5 w-5", contact.isPrimary ? "text-teal-base fill-teal-base" : "text-teal-dark/10")} />
                   </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-brown/60">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <Mail className="w-3.5 h-3.5 text-brown/30 shrink-0" />
-                      <span className="truncate">{contact.email}</span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[13px] font-black text-teal-dark uppercase tracking-widest">{contact.fullName}</span>
+                      <Badge variant="neutral" className={cn(
+                        "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border backdrop-blur-md",
+                        contact.role === 'Decision Maker' ? 'bg-teal-base/10 text-teal-base border-teal-base/20' : 'bg-teal-dark/5 text-teal-dark/30 border-teal-dark/10'
+                      )}>
+                        {contact.role || contact.title || "OPERATIVE"}
+                      </Badge>
                     </div>
-                    {contact.phone && (
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-brown/30 shrink-0" />
-                        <span>{contact.phone}</span>
+                    
+                    <div className="flex flex-wrap items-center gap-6">
+                      <div className="flex items-center gap-2 text-teal-dark/40">
+                        <Mail className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[200px]">{contact.email}</span>
                       </div>
-                    )}
+                      {contact.phone && (
+                        <div className="flex items-center gap-2 text-teal-dark/40">
+                          <Phone className="w-3.5 h-3.5 shrink-0" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">{contact.phone}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
                   {!contact.isPrimary && (
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-7 w-7 text-brown/40 hover:text-teal-base"
+                      className="h-9 w-9 text-teal-dark/30 hover:text-teal-base hover:bg-teal-base/10 rounded-xl"
                       onClick={() => handleSetPrimary(contact.id)}
-                      title="Set as Primary"
+                      title="Promote to Primary"
                     >
-                      <Star className="w-4 h-4" />
+                      <Plus className="w-4 h-4" />
                     </Button>
                   )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-brown/40">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-teal-dark/30 hover:text-teal-dark hover:bg-teal-dark/5 rounded-xl">
                     <MoreVertical className="w-4 h-4" />
                   </Button>
                 </div>
@@ -217,16 +224,16 @@ export function ContactManager({ companyId, contacts, onUpdate }: ContactManager
           ))}
 
           {contacts.length === 0 && !isAdding && (
-            <div className="text-center py-8 bg-gray-bg/30 rounded-xl border border-dashed border-gray-border">
-              <UserPlus className="w-10 h-10 text-brown/20 mx-auto mb-3" />
-              <p className="text-sm text-brown/50 italic">No stakeholders registered.</p>
+            <div className="text-center py-20 bg-teal-dark/5 rounded-[24px] border border-dashed border-teal-dark/10">
+              <UserPlus className="w-16 h-16 text-teal-dark/5 mx-auto mb-6" />
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-dark/30 mb-8 italic">No registered stakeholders detected</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-teal-base mt-2"
+                className="text-teal-base h-11 px-8 rounded-xl font-black uppercase tracking-widest text-[10px] bg-teal-base/5 hover:bg-teal-base/10 transition-all border border-teal-base/10"
                 onClick={() => setIsAdding(true)}
               >
-                Add the first contact
+                Initiate New Registry
               </Button>
             </div>
           )}

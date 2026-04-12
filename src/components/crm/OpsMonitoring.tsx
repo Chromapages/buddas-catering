@@ -5,6 +5,7 @@ import { getOpsMonitoringAlerts } from "@/lib/firebase/services/crm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { AlertTriangle, Clock, Users, Zap, ShieldAlert } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function OpsMonitoring() {
   const { data: alerts, isLoading } = useQuery({
@@ -54,38 +55,50 @@ export function OpsMonitoring() {
   const totalAlerts = Object.values(alerts).reduce((a, b) => a + b, 0);
 
   return (
-    <Card className={`border-2 transition-colors ${totalAlerts > 5 ? 'border-red-500/20' : 'border-gray-border/40'}`}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className={`h-5 w-5 ${totalAlerts > 5 ? 'text-red-500' : 'text-orange'}`} />
-            <CardTitle className="text-lg font-heading font-semibold text-brown">SLA Monitoring</CardTitle>
-          </div>
-          {totalAlerts > 0 && (
-            <div className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-bounce">
-              {totalAlerts} ACTION REQUIRED
-            </div>
-          )}
+    <div className={cn("p-6 space-y-6", totalAlerts > 5 ? 'bg-v-secondary/5' : 'bg-transparent')}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className={`h-4 w-4 ${totalAlerts > 5 ? 'text-v-secondary' : 'text-v-on-surface/40'}`} />
+          <h3 className="text-sm font-bold text-v-on-surface tracking-tight">SLA Performance</h3>
         </div>
-      </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-4 pt-4">
-        {alertItems.map((item, i) => (
-          <div key={i} className={`p-4 rounded-xl border border-gray-border/20 ${item.bg} relative overflow-hidden group`}>
-            <div className="flex justify-between items-start mb-2">
-              <div className={`p-1.5 rounded-lg bg-white/80 shadow-sm ${item.color}`}>
-                <item.icon className="w-4 h-4" />
-              </div>
-              <span className={`text-2xl font-black ${item.count > 0 ? item.color : 'text-brown/20'}`}>
-                {item.count}
-              </span>
-            </div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-brown/70">{item.label}</p>
-            <p className="text-[10px] text-brown/50 mt-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              {item.description}
-            </p>
+        {totalAlerts > 5 && (
+          <div className="bg-v-secondary text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">
+            {totalAlerts} Critical
           </div>
-        ))}
-      </CardContent>
-    </Card>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {alertItems.map((item, i) => {
+          const isDanger = item.color.includes('red') || item.count > 10;
+          const isWarning = item.color.includes('orange') || item.count > 5;
+          
+          return (
+            <div key={i} className="p-4 rounded-[20px] bg-v-surface border border-v-outline/20 shadow-sm group hover:shadow-ambient hover:border-v-primary/10 transition-all duration-300">
+              <div className="flex justify-between items-start mb-4">
+                <div className={cn(
+                  "p-2 rounded-full",
+                  isDanger ? "bg-v-secondary/10 text-v-secondary" : isWarning ? "bg-v-primary/10 text-v-primary" : "bg-v-container text-v-on-surface/40"
+                )}>
+                  <item.icon className="w-4 h-4" />
+                </div>
+                <span className={cn(
+                  "text-2xl font-bold tabular-nums",
+                  item.count > 0 ? (isDanger ? "text-v-secondary" : "text-v-on-surface") : "text-v-on-surface/20"
+                )}>
+                  {item.count}
+                </span>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-v-on-surface/40 leading-none">{item.label}</p>
+                <p className="text-[9px] font-medium text-v-on-surface/30 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {item.description}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

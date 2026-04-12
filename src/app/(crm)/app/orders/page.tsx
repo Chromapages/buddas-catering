@@ -1,160 +1,117 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { 
   Search, 
   Filter, 
   ChevronDown, 
   ChevronUp, 
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  Package,
   Calendar,
-  Users,
-  Utensils,
-  Gem,
-  ArrowRight,
-  ClipboardList,
-  X
+  LayoutGrid,
+  List,
+  Trash2,
+  Clock
 } from "lucide-react";
 import { Input } from "@/components/shared/Input";
-import { Select } from "@/components/shared/Select";
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
+import { Card, CardContent } from "@/components/shared/Card";
 import { 
   getAllEnhancedOrders, 
   EnhancedOrder, 
-  completeCateringRequest,
-  deleteCateringRequest
+  deleteCateringRequest 
 } from "@/lib/firebase/services/crm";
-import Link from "next/link";
-import { cn, formatDate, parseDate } from "@/lib/utils";
-import { exportToCsv } from "@/lib/utils/export";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/shared/DropdownMenu";
-import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/firebase/context/auth";
 import toast from "react-hot-toast";
+import { Company } from "@/types/crm";
+import { getAllCompanies } from "@/lib/firebase/services/crm";
+import { OrderBentoGrid } from "@/components/crm/OrderBentoGrid";
 
-type SortField = "company" | "date" | "size" | "status" | "amount";
+type SortField = "id" | "company" | "amount" | "date";
 type SortOrder = "asc" | "desc";
 
 export default function OrdersPage() {
+  const router = useRouter();
   const { user, role } = useAuth();
   const [orders, setOrders] = useState<EnhancedOrder[]>([]);
+  const [companyMap, setCompanyMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [programFilter, setProgramFilter] = useState("All");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  
-  // Action state
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Pagination
+  const [refreshKey, setRefreshKey] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const fetchOrders = async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const data = await getAllEnhancedOrders(user.uid, role || undefined);
-      setOrders(data);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-    } finally {
-      setLoading(false);
-    }
+  // View Mode Persistence
+  const [viewMode, setViewMode] = useState<"bento" | "classic">("bento");
+
+  useEffect(() => {
+    const savedView = localStorage.getItem("crm-orders-view") as "bento" | "classic";
+    if (savedView) setViewMode(savedView);
+  }, []);
+
+  const handleToggleView = (mode: 'bento' | 'classic') => {
+    setViewMode(mode);
+    localStorage.setItem("crm-orders-view", mode);
   };
 
   useEffect(() => {
-    if (user) {
-      fetchOrders();
-    }
-  }, [user]);
-
-  const handleComplete = async (order: EnhancedOrder) => {
-    if (!user) return;
-    try {
-      await completeCateringRequest(order.id, order.companyId || "", user.uid, user.displayName || user.email || "User");
-      toast.success("Order marked as fulfilled");
-      fetchOrders();
-    } catch (error) {
-      toast.error("Failed to update status");
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setIsDeleting(true);
-    try {
-      await deleteCateringRequest(deleteId);
-      toast.success("Order deleted");
-      fetchOrders();
-    } catch (error) {
-      toast.error("Failed to delete order");
-    } finally {
-      setIsDeleting(false);
-      setDeleteId(null);
-    }
-  };
-
-  // Filter Logic
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = (order.companyName || "").toLowerCase().includes(search.toLowerCase()) || 
-                          (order.contactName || "").toLowerCase().includes(search.toLowerCase()) ||
-                          (order.id || "").toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || order.fulfillmentStatus === statusFilter;
-    const matchesProgram = programFilter === "All" || 
-                           (programFilter === "Program" && order.isProgramOrder) ||
-                           (programFilter === "Standard" && !order.isProgramOrder);
-    
-    // Date Range Filter
-    const orderDate = order.preferredDate ? parseDate(order.preferredDate) : null;
-    let matchesDateRange = true;
-    if (orderDate) {
-      if (startDate && orderDate < new Date(startDate)) matchesDateRange = false;
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        if (orderDate > end) matchesDateRange = false;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [ordersData, companiesData] = await Promise.all([
+          getAllEnhancedOrders(user?.uid, role || undefined),
+          getAllCompanies(),
+        ]);
+        setOrders(ordersData);
+        const map: Record<string, string> = {};
+        (companiesData as Company[]).forEach((c) => {
+          map[c.id] = c.name;
+        });
+        setCompanyMap(map);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
-    } else if (startDate || endDate) {
-      matchesDateRange = false; // If no date, and filtering by date, exclude
-    }
+    };
+    if (user) fetchData();
+  }, [refreshKey, user, role]);
 
-    return matchesSearch && matchesStatus && matchesProgram && matchesDateRange;
+  const filteredOrders = orders.filter((o) => {
+    const companyName = o.companyName || companyMap[o.companyId] || "";
+    const matchesSearch =
+      companyName.toLowerCase().includes(search.toLowerCase()) ||
+      o.id.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || o.fulfillmentStatus === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
-  // Sort Logic
   const sortedOrders = [...filteredOrders].sort((a, b) => {
     let result = 0;
-    if (sortField === "company") result = (a.companyName || "").localeCompare(b.companyName || "");
+    if (sortField === "id") result = a.id.localeCompare(b.id);
+    if (sortField === "company") {
+      const nameA = a.companyName || companyMap[a.companyId] || "";
+      const nameB = b.companyName || companyMap[b.companyId] || "";
+      result = nameA.localeCompare(nameB);
+    }
+    if (sortField === "amount") result = (a.quoteAmount || 0) - (b.quoteAmount || 0);
     if (sortField === "date") {
-      const dateA = parseDate(a.createdAt)?.getTime() || 0;
-      const dateB = parseDate(b.createdAt)?.getTime() || 0;
+      const dateA = a.preferredDate ? new Date(a.preferredDate).getTime() : 0;
+      const dateB = b.preferredDate ? new Date(b.preferredDate).getTime() : 0;
       result = dateA - dateB;
     }
-    if (sortField === "size") result = (a.estimatedGroupSize || 0) - (b.estimatedGroupSize || 0);
-    if (sortField === "status") result = (a.fulfillmentStatus || "").localeCompare(b.fulfillmentStatus || "");
-    if (sortField === "amount") result = (a.quoteAmount || 0) - (b.quoteAmount || 0);
-    
     return sortOrder === "asc" ? result : -result;
   });
 
-  // Pagination Logic
   const totalPages = Math.ceil(sortedOrders.length / itemsPerPage);
   const paginatedOrders = sortedOrders.slice(
     (currentPage - 1) * itemsPerPage,
@@ -170,340 +127,266 @@ export default function OrdersPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Pending": return <Badge variant="warning">{status}</Badge>;
-      case "In Progress": return <Badge variant="neutral">{status}</Badge>;
-      case "Fulfilled": return <Badge variant="success">{status}</Badge>;
-      case "Invoiced": return <Badge variant="default">{status}</Badge>;
-      case "Paid": return <Badge variant="success">{status}</Badge>;
-      case "Cancelled": return <Badge variant="danger">{status}</Badge>;
-      default: return <Badge variant="neutral">{status || "Pending"}</Badge>;
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ChevronDown className="w-4 h-4 text-chef-muted opacity-30 ml-1 inline-block" />;
+    return sortOrder === "asc" ? (
+      <ChevronUp className="w-4 h-4 text-accent-fresh ml-1 inline-block" />
+    ) : (
+      <ChevronDown className="w-4 h-4 text-accent-fresh ml-1 inline-block" />
+    );
+  };
+
+  const handleDelete = async (orderId: string) => {
+    if (window.confirm("Are you sure you want to purge this logistical record?")) {
+      try {
+        await deleteCateringRequest(orderId);
+        setRefreshKey((prev) => prev + 1);
+        toast.success("Order record purged");
+      } catch (error) {
+        toast.error("Failed to delete record");
+      }
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ChevronDown className="w-4 h-4 text-brown/30 ml-1 inline-block" />;
-    return sortOrder === "asc" 
-      ? <ChevronUp className="w-4 h-4 text-teal-dark ml-1 inline-block" /> 
-      : <ChevronDown className="w-4 h-4 text-teal-dark ml-1 inline-block" />;
-  };
-
   return (
-    <div className="p-6 lg:p-8 flex flex-col h-full bg-gray-bg/30">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div className="relative flex h-full flex-col overscroll-y-contain p-8 gap-8">
+      {/* Precision Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold font-heading text-teal-dark flex items-center gap-2">
-            Catering Orders
-          </h1>
-          <p className="text-sm text-brown/70 mt-1">Manage event fulfillment, memberships, and production flow.</p>
+          <h1 className="text-4xl font-black text-chef-charcoal tracking-tight leading-none mb-2">Orders</h1>
+          <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.2em]">Global Logistics Ledger & Fulfillment</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <div className="flex bg-chef-prep/50 p-1.5 rounded-[20px] border border-chef-charcoal/5 shadow-soft-low">
+            <button 
+              onClick={() => handleToggleView('classic')}
+              className={cn(
+                "h-9 px-5 rounded-[14px] text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95",
+                viewMode === 'classic' 
+                  ? "bg-white text-chef-charcoal shadow-soft-mid border border-chef-charcoal/5" 
+                  : "text-chef-muted hover:text-chef-charcoal"
+              )}
+            >
+              <List size={14} /> Classic
+            </button>
+            <button 
+              onClick={() => handleToggleView('bento')}
+              className={cn(
+                "h-9 px-5 rounded-[14px] text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95",
+                viewMode === 'bento' 
+                  ? "bg-white text-chef-charcoal shadow-soft-mid border border-chef-charcoal/5" 
+                  : "text-chef-muted hover:text-chef-charcoal"
+              )}
+            >
+              <LayoutGrid size={14} /> Intelligence
+            </button>
+          </div>
           <Button
-          variant="outline"
-          className="hidden sm:flex"
-          onClick={() =>
-            exportToCsv(
-              filteredOrders.map((o) => ({
-                id: o.id,
-                company: o.companyName ?? "",
-                contact: o.contactName ?? "",
-                eventType: o.cateringNeed ?? o.eventType ?? "",
-                date: o.preferredDate ?? "",
-                groupSize: o.estimatedGroupSize ?? 0,
-                amount: o.quoteAmount ?? "",
-                status: o.fulfillmentStatus ?? "",
-                program: o.isProgramOrder ? "Yes" : "No",
-              })),
-              `orders_${new Date().toISOString().slice(0, 10)}`
-            )
-          }
-        >
-          Export CSV
-        </Button>
-          <Button asChild>
-            <Link href="/app/orders/new">New Order</Link>
+            variant="outline"
+            className="hidden sm:flex border-chef-charcoal/10 bg-white hover:bg-chef-prep h-12 rounded-[16px] px-6 text-[10px] font-black uppercase tracking-widest transition-all shadow-soft-low"
+          >
+            Export Manifest
+          </Button>
+          <Button
+            onClick={() => router.push("/app/orders/new")}
+            className="h-12 px-8 rounded-[20px] bg-chef-charcoal text-white text-[10px] font-black uppercase tracking-widest shadow-soft-mid transition-all active:scale-95"
+          >
+            Create Order
           </Button>
         </div>
       </div>
 
-      {/* Filters Bar */}
-      <div className="bg-white p-4 rounded-t-xl border border-gray-border flex flex-wrap gap-4 items-center justify-between shadow-sm">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brown/40" />
-          <Input 
-            placeholder="Search orders..." 
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-brown/60" />
-            <Select 
-              className="w-40 h-10"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={[
-                { value: "All", label: "All Statuses" },
-                { value: "Pending", label: "Pending" },
-                { value: "In Progress", label: "In Progress" },
-                { value: "Fulfilled", label: "Fulfilled" },
-                { value: "Invoiced", label: "Invoiced" },
-                { value: "Paid", label: "Paid" },
-                { value: "Cancelled", label: "Cancelled" },
-              ]}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Gem className="w-4 h-4 text-orange" />
-            <Select 
-              className="w-40 h-10"
-              value={programFilter}
-              onChange={(e) => setProgramFilter(e.target.value)}
-              options={[
-                { value: "All", label: "All Customers" },
-                { value: "Program", label: "Program Members" },
-                { value: "Standard", label: "Standard" },
-              ]}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-brown/40 uppercase tracking-wider">Date:</span>
-            <div className="flex items-center gap-1">
-              <input 
-                type="date" 
-                className="text-xs border-gray-border rounded-md px-2 py-1.5 bg-gray-bg focus:ring-teal-base focus:border-teal-base"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <span className="text-brown/30">-</span>
-              <input 
-                type="date" 
-                className="text-xs border-gray-border rounded-md px-2 py-1.5 bg-gray-bg focus:ring-teal-base focus:border-teal-base"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-              {(startDate || endDate) && (
-                <button 
-                  onClick={() => { setStartDate(""); setEndDate(""); }}
-                  className="p-1 hover:text-orange transition-colors"
-                  title="Clear date filter"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+      {/* Intelligence Filters */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        {["All", "Pending", "Confirmed", "Fulfilled", "Cancelled"].map((f) => {
+          const isActive = statusFilter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => {
+                setStatusFilter(f);
+                setCurrentPage(1);
+              }}
+              className={cn(
+                "px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-full transition-all border active:scale-95",
+                isActive
+                  ? "bg-chef-charcoal text-white border-chef-charcoal shadow-soft-mid"
+                  : "bg-white text-chef-muted border-chef-charcoal/5 hover:border-chef-charcoal/20 hover:text-chef-charcoal shadow-soft-low"
               )}
-            </div>
-          </div>
-        </div>
+            >
+              {f}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Table */}
-      <div className="bg-white border-x border-b border-gray-border rounded-b-xl shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-gray-bg/50 border-b border-gray-border text-brown/70 font-medium">
-              <tr>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("company")}>
-                  Company <SortIcon field="company" />
-                </th>
-                <th className="px-6 py-4">Event Type</th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("date")}>
-                  Event Date <SortIcon field="date" />
-                </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("size")}>
-                  Size <SortIcon field="size" />
-                </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("amount")}>
-                  Amount <SortIcon field="amount" />
-                </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("status")}>
-                  Status <SortIcon field="status" />
-                </th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-border text-brown">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-brown/50">
-                    <div className="flex items-center justify-center gap-2">
-                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-teal-base border-t-transparent"></div>
-                       Loading orders...
-                    </div>
-                  </td>
-                </tr>
-              ) : paginatedOrders.length > 0 ? (
-                paginatedOrders.map((order) => (
-                  <tr 
-                    key={order.id} 
-                    className="hover:bg-gray-bg/50 transition-colors group cursor-pointer"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold">{order.companyName || "N/A"}</span>
-                            {order.isProgramOrder && (
-                              <Badge variant="neutral" className="bg-orange/10 text-orange border-orange/20 text-[10px] py-0 px-1.5">
-                                PROGRAM
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-xs text-brown/50">{order.contactName || "No Contact"}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Utensils className="w-3.5 h-3.5 text-brown/40" />
-                        {order.cateringNeed || order.eventType || "General"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-brown/40" />
-                        {order.preferredDate ? formatDate(order.preferredDate, "MMM d, yyyy") : "TBD"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-medium">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-3.5 h-3.5 text-brown/40" />
-                        {order.estimatedGroupSize || 0}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-teal-dark">
-                          {order.quoteAmount 
-                            ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(order.quoteAmount)
-                            : "—"}
-                        </span>
-                        {order.potentialDiscount && order.quoteAmount && (
-                          <span className="text-[10px] text-orange font-medium">
-                            Incl. {order.potentialDiscount}% Discount
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">{getStatusBadge(order.fulfillmentStatus || "Pending")}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" asChild className="hidden md:flex h-8 px-2 text-teal-dark hover:bg-teal-base/10 group-hover:opacity-100 opacity-60">
-                          <Link href={`/app/orders/${order.id}`}>
-                            Details
-                            <ArrowRight className="ml-1 h-3 w-3" />
-                          </Link>
-                        </Button>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-2 text-brown/40 hover:text-brown transition-colors rounded-lg hover:bg-gray-bg">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Order Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                              <Link href={`/app/orders/${order.id}`} className="flex items-center">
-                                <ClipboardList className="mr-2 h-4 w-4" />
-                                View Details
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/app/orders/${order.id}/edit`} className="flex items-center">
-                                <Utensils className="mr-2 h-4 w-4" />
-                                Edit Order
-                              </Link>
-                            </DropdownMenuItem>
-                            {order.fulfillmentStatus !== "Fulfilled" && (
-                              <DropdownMenuItem 
-                                onClick={() => handleComplete(order)}
-                                className="text-teal-dark focus:text-teal-dark"
-                              >
-                                <Badge variant="success" className="mr-2 h-2 w-2 rounded-full p-0" />
-                                Mark Complete
-                              </DropdownMenuItem>
-                            )}
-                            {role !== 'rep' && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-orange focus:text-orange"
-                                  onClick={() => setDeleteId(order.id)}
-                                >
-                                  <X className="mr-2 h-4 w-4" />
-                                  Delete Order
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </td>
+      {/* Dynamic Results Area */}
+      {viewMode === "bento" ? (
+        <div className="flex-1 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-[280px] rounded-[32px] bg-chef-prep/20 animate-pulse border border-dashed border-chef-charcoal/5" />
+              ))}
+            </div>
+          ) : sortedOrders.length > 0 ? (
+            <OrderBentoGrid orders={paginatedOrders} onSelect={(o) => router.push(`/app/orders/${o.id}`)} />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[40px] border border-dashed border-chef-charcoal/10">
+              <h3 className="text-3xl font-black text-chef-charcoal/10 uppercase tracking-tighter">No Active Manifests</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-chef-muted/30 mt-4">Adjust filters or create a new order</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <Card className="flex-1 flex flex-col bg-white border border-chef-charcoal/5 shadow-soft-mid rounded-[40px] overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <div className="px-8 py-8 flex flex-wrap items-center justify-between gap-6 border-b border-chef-charcoal/10 bg-chef-prep/30">
+            <div className="relative w-full sm:w-96 group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-chef-muted group-focus-within:text-accent-fresh transition-colors" />
+              <Input
+                placeholder="Search logistics data..."
+                className="pl-14 h-14 text-sm border border-transparent bg-chef-prep/50 focus:bg-white focus:border-accent-fresh/20 rounded-[20px] placeholder:text-chef-muted/40 transition-all focus:ring-0 shadow-soft-low"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          </div>
+
+          <CardContent className="p-0 overflow-hidden flex-1 flex flex-col">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-chef-prep/30 border-b border-chef-charcoal/5 text-[10px] font-black uppercase tracking-[0.25em] text-chef-muted">
+                  <tr>
+                    <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("id")}>
+                      LOG ID <SortIcon field="id" />
+                    </th>
+                    <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("company")}>
+                      CLIENT <SortIcon field="company" />
+                    </th>
+                    <th className="px-8 py-6 sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">OPERATIONAL STATUS</th>
+                    <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("amount")}>
+                      VALUE <SortIcon field="amount" />
+                    </th>
+                    <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("date")}>
+                      FULFILLMENT <SortIcon field="date" />
+                    </th>
+                    <th className="px-8 py-6 text-right sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">OPERATIONS</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-brown/50 bg-gray-bg/10">
-                    <div className="flex flex-col items-center gap-2">
-                      <ClipboardList className="h-8 w-8 text-brown/20" />
-                      <p>No catering orders found.</p>
-                      {search && (
-                        <Button variant="ghost" onClick={() => setSearch("")} className="text-teal-base hover:bg-teal-base/5">
-                          Clear search
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="mt-auto px-6 py-4 border-t border-gray-border bg-gray-bg/30 flex items-center justify-between">
-          <p className="text-sm text-brown/60">
-            Showing <span className="font-medium text-brown">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-brown">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> of <span className="font-medium text-brown">{filteredOrders.length}</span> results
-          </p>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <div className="text-sm font-medium text-brown px-2">
-              Page {currentPage} of {totalPages || 1}
+                </thead>
+                <tbody className="divide-y divide-chef-charcoal/[0.03]">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-8 py-32 text-center">
+                        <div className="flex flex-col items-center gap-5">
+                          <div className="h-10 w-10 border-4 border-accent-fresh/30 border-t-accent-fresh rounded-full animate-spin shadow-soft-mid" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-chef-muted/50">Processing Logistics...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : paginatedOrders.length > 0 ? (
+                    paginatedOrders.map((order) => (
+                      <tr
+                        key={order.id}
+                        className="hover:bg-chef-prep/30 transition-all cursor-pointer group"
+                        onClick={() => router.push(`/app/orders/${order.id}`)}
+                      >
+                        <td className="px-8 py-5">
+                          <span className="font-black text-chef-charcoal/60 text-xs tabular-nums group-hover:text-accent-fresh transition-colors">#{order.id.slice(0, 8).toUpperCase()}</span>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-[14px] bg-chef-charcoal flex items-center justify-center text-white shadow-soft-low">
+                              <Package size={18} />
+                            </div>
+                            <span className="font-black text-chef-charcoal tracking-tight">{order.companyName || companyMap[order.companyId] || "Private Client"}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <Badge
+                            className={cn(
+                              "font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-full",
+                              order.fulfillmentStatus === "Fulfilled"
+                                ? "bg-chef-charcoal text-white"
+                                : order.fulfillmentStatus === "Confirmed"
+                                  ? "bg-accent-fresh/10 text-accent-fresh border-accent-fresh/20"
+                                  : "bg-accent-heat/10 text-accent-heat border-accent-heat/20"
+                            )}
+                          >
+                            {order.fulfillmentStatus || "Pending"}
+                          </Badge>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex items-baseline gap-1">
+                            <span className="font-black text-chef-charcoal tabular-nums text-base">
+                              ${(order.quoteAmount || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-5">
+                          <div className="flex items-center gap-2 text-chef-muted/60 text-[11px] font-bold">
+                            <Calendar size={12} className="opacity-30" />
+                            {order.preferredDate ? format(new Date(order.preferredDate), "MMM dd, yyyy") : "TBD"}
+                          </div>
+                        </td>
+                        <td className="px-8 py-5 text-right flex items-center justify-end gap-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(order.id);
+                            }}
+                            className="p-2 rounded-lg text-chef-muted hover:bg-accent-heat/10 hover:text-accent-heat transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="px-8 py-32 text-center text-chef-muted/40 font-bold uppercase tracking-widest text-[10px]">
+                        No logistics data found in this segment.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-2"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
 
-      <ConfirmModal
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
-        title="Delete Order?"
-        description="Are you sure you want to delete this catering order? This action cannot be undone."
-        confirmText={isDeleting ? "Deleting..." : "Delete Order"}
-        variant="danger"
-      />
+            {/* Pagination Precision */}
+            <div className="px-8 py-6 border-t border-chef-charcoal/10 bg-chef-prep/30 flex items-center justify-between">
+              <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.15em]">
+                Perspective: <span className="text-chef-charcoal">{(currentPage - 1) * itemsPerPage + 1}</span> - <span className="text-chef-charcoal">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> <span className="mx-2 opacity-20">/</span> {filteredOrders.length} Total
+              </p>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="h-10 w-12 p-0 border-chef-charcoal/10 bg-white hover:bg-chef-prep rounded-xl"
+                >
+                  <ChevronLeft className="w-5 h-5 text-chef-muted" />
+                </Button>
+                <div className="text-[11px] font-black text-chef-charcoal bg-white h-10 px-6 flex items-center rounded-xl border border-chef-charcoal/10 tracking-widest tabular-nums">
+                  {currentPage} <span className="mx-2 opacity-20 text-[9px]">OF</span> {totalPages || 1}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="h-10 w-12 p-0 border-chef-charcoal/10 bg-white hover:bg-chef-prep rounded-xl"
+                >
+                  <ChevronRight className="w-5 h-5 text-chef-muted" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

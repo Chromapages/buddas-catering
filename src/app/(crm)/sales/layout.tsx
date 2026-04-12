@@ -15,7 +15,6 @@ export default function SalesLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { role, loading } = useAuth();
   const router = useRouter();
 
@@ -26,46 +25,17 @@ export default function SalesLayout({
 
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-gray-bg overflow-hidden relative font-body">
+      <div className="flex h-screen bg-v-background overflow-hidden relative font-sans">
         <CommandPalette />
         
-        {/* Mobile sidebar overlay */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 z-40 bg-brown/80 backdrop-blur-sm lg:hidden transition-opacity duration-300"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-      {/* Mobile sidebar panel */}
-      <div 
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white transition-transform duration-300 ease-in-out lg:hidden ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {sidebarOpen && (
-          <div className="absolute right-0 top-0 -mr-12 pt-4">
-            <button
-              type="button"
-              className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <span className="sr-only">Close sidebar</span>
-              <X className="h-6 w-6 text-white" aria-hidden="true" />
-            </button>
-          </div>
-        )}
-        <SalesSidebar />
-      </div>
-
       {/* Desktop static sidebar */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col lg:inset-y-0">
+      <div className="hidden lg:flex lg:w-72 lg:flex-col lg:inset-y-0 border-r border-v-outline/10 bg-v-surface">
         <SalesSidebar />
       </div>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav onMenuClick={() => setSidebarOpen(true)} />
+      <div className="flex flex-1 flex-col overflow-hidden bg-v-background">
+        <TopNav />
 
         <main className="flex-1 overflow-y-auto">
           <div className="py-6">

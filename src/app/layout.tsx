@@ -63,6 +63,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -118,22 +120,24 @@ export default function RootLayout({
         />
       </head>
       <body 
-        className="min-h-full flex flex-col font-body bg-cream text-brown selection:bg-teal-base/30"
+        className="min-h-full flex flex-col font-body bg-cream text-brown selection:bg-teal-base/30 dark:bg-zinc-950 dark:text-zinc-100"
         suppressHydrationWarning
       >
         <AuthProvider>
           <QueryProvider>
-            <Toaster 
-              position="top-right" 
-              toastOptions={{
-                className: "font-body text-sm text-brown",
-                style: {
-                  background: '#ffffff',
-                  border: '1px solid #E5E5E5', 
-                }
-              }} 
-            />
-            {children}
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <Toaster 
+                position="top-right" 
+                toastOptions={{
+                  className: "font-body text-sm text-brown dark:bg-zinc-900 dark:text-zinc-100 dark:border-white/10",
+                  style: {
+                    background: '#ffffff',
+                    border: '1px solid #E5E5E5', 
+                  }
+                }} 
+              />
+              {children}
+            </ThemeProvider>
           </QueryProvider>
         </AuthProvider>
       </body>

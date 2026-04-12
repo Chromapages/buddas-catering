@@ -13,6 +13,7 @@ import {
   Award,
   CheckCircle2
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useAuth } from "@/lib/firebase/context/auth";
 
@@ -51,22 +52,26 @@ export function RepScorecard({ repId, repName }: RepScorecardProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold font-heading text-brown">{repName}&apos;s Performance</h2>
+      <div className="flex items-center gap-3 px-2">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-brown/30 whitespace-nowrap">{repName} Performance Scorecard</h2>
+        <div className="h-px bg-white/10 flex-1" />
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metrics.map((m, i) => (
-          <Card key={i} className="border-gray-border/40 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={`p-2 rounded-lg bg-gray-bg ${m.color}`}>
-                <m.icon className="w-5 h-5" />
+          <Card key={i} variant="glass" className="border-white/20 p-5 group hover:bg-white/40 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-teal-dark/5">
+            <div className="flex flex-col gap-4">
+              <div className={cn(
+                "w-10 h-10 rounded-2xl flex items-center justify-center shadow-inner",
+                m.color.replace('text-', 'bg-').replace('500', '500/10').replace('orange', 'orange/10').replace('brown', 'brown/10').replace('teal-dark', 'teal-dark/10')
+              )}>
+                <m.icon className={cn("w-5 h-5", m.color === "text-brown" ? "text-teal-dark" : m.color)} />
               </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-brown/50">{m.label}</p>
-                <p className="text-lg font-bold text-brown">{m.value}</p>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-teal-dark/40">{m.label}</p>
+                <p className="text-xl font-bold text-teal-dark group-hover:text-teal-base transition-colors leading-none">{m.value}</p>
               </div>
-            </CardContent>
+            </div>
           </Card>
         ))}
       </div>

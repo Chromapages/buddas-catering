@@ -105,12 +105,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Commission Approvals
     match /commission_approvals/{approvalId} {
-      allow read: if isOwner() || isOps() || 
+      allow read: if isPrivileged() || 
                   (isRep() && resource.data.repId == request.auth.uid);
       allow create: if isTeamMember();
-      allow update: if isOwner() || isOps();
+      allow update: if isPrivileged();
       allow delete: if isOwner();
     }
 

@@ -1,31 +1,25 @@
 "use client";
 
 import { 
-  Calendar, 
-  Users, 
-  FileText, 
-  Phone, 
-  Mail, 
-  ChevronLeft,
   Loader2,
   AlertCircle,
-  Clock,
-  UserPlus,
-  UtensilsCrossed,
-  ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
-import { Badge } from "@/components/shared/Badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
 import { StatusTimeline } from "@/components/crm/StatusTimeline";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getLeadById, updateLead, updateLeadStatus, convertLeadToCompany } from "@/lib/firebase/services/lead.service";
 import { getAllUsers } from "@/lib/firebase/services/user.service";
+import { getRequestsByLeadId } from "@/lib/firebase/services/request.service";
 import { useEffect, useState, use } from "react";
 import { useAuth } from "@/lib/firebase/context/auth";
 import { toast } from "react-hot-toast";
 import { LeadStatus } from "@/types/crm";
+import { ContactHeader } from "@/components/crm/details/ContactHeader";
+import { ContactKPIs } from "@/components/crm/details/ContactKPIs";
+import { ContactTabs } from "@/components/crm/details/ContactTabs";
+import { ContactSidePanel } from "@/components/crm/details/ContactSidePanel";
+import { Card, CardContent } from "@/components/shared/Card";
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -37,6 +31,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [isConverting, setIsConverting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
   const [editData, setEditData] = useState({
     companyName: "",
     contactName: "",
@@ -63,11 +59,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     fetchData();
-    const fetchUsers = async () => {
-      const data = await getAllUsers();
-      setUsers(data);
+    const fetchAuxData = async () => {
+      const [usersData, requestsData] = await Promise.all([
+        getAllUsers(),
+        getRequestsByLeadId(id, user?.uid, role || undefined)
+      ]);
+      setUsers(usersData);
+      setRequests(requestsData);
     };
-    fetchUsers();
+    fetchAuxData();
   }, [id, user?.uid, role]);
 
   const handleEdit = () => {
@@ -161,22 +161,22 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-brown/50">
-        <Loader2 className="w-8 h-8 animate-spin mb-4" />
-        <p>Loading lead details...</p>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-chef-muted">
+        <Loader2 className="w-10 h-10 animate-spin mb-6 text-accent-fresh" />
+        <p className="text-[10px] font-black uppercase tracking-[0.2em]">Synchronizing Intelligence...</p>
       </div>
     );
   }
 
   if (!lead) {
     return (
-      <div className="p-12 text-center text-brown/50 bg-gray-bg/10 rounded-xl m-8 border border-dashed border-brown/20">
-        <div className="flex flex-col items-center gap-4">
-          <AlertCircle className="h-12 w-12 text-brown/20" />
-          <h2 className="text-xl font-bold text-brown font-heading">Lead Not Found</h2>
-          <p className="max-w-xs mx-auto">We couldn't find the lead you were looking for. It might have been deleted or moved.</p>
-          <Button asChild className="mt-2">
-            <Link href="/app/leads">Back to Leads</Link>
+      <div className="p-16 text-center text-chef-muted bg-chef-prep/30 rounded-[40px] m-12 border border-dashed border-chef-charcoal/10 shadow-soft-low">
+        <div className="flex flex-col items-center gap-6">
+          <AlertCircle className="h-16 w-16 text-accent-heat/20" />
+          <h2 className="text-2xl font-black text-chef-charcoal tracking-tight uppercase">Intelligence Anchor Lost</h2>
+          <p className="max-w-md mx-auto text-sm font-medium leading-relaxed opacity-60">The requested record protocol could not be established. It may have been purged or relocated within the matrix.</p>
+          <Button asChild className="mt-4 h-14 px-10 rounded-[20px] bg-chef-charcoal text-white text-[10px] font-black uppercase tracking-widest shadow-soft-mid">
+            <Link href="/app/leads">Return to Directory</Link>
           </Button>
         </div>
       </div>
@@ -194,261 +194,168 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const metrics = {
+    totalSpend: requests.reduce((sum, r) => sum + (r.quoteAmount || 0), 0),
+    ordersCount: requests.filter(r => r.fulfillmentStatus === 'Fulfilled').length,
+    aov: requests.length > 0 ? (requests.reduce((sum, r) => sum + (r.quoteAmount || 0), 0) / requests.length) : 0
+  };
+
+  const assignedRep = users.find(u => u.id === lead.assignedRepId) || { id: lead.assignedRepId, name: lead.assignedRepName || "Unassigned" };
+
   return (
-    <div className="p-6 lg:p-8 flex flex-col gap-6 bg-gray-bg/30 min-h-full">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <Link 
-          href="/app/leads" 
-          className="flex items-center text-sm font-medium text-brown/60 hover:text-teal-dark transition-colors w-fit"
-        >
-          <ChevronLeft className="mr-1 h-4 w-4" />
-          Back to Leads
-        </Link>
-        
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-border pb-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold font-heading text-teal-dark">
-                {lead.companyName || "Lead Detail"}
-              </h1>
-              <Badge variant={getStatusVariant(lead.status || "New")}>
-                {lead.status || "New"}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-brown/70">
-              <Mail className="h-4 w-4 text-brown/40" />
-              <span className="font-medium">{lead.email}</span>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            {isEditing ? (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                <Button onClick={handleSave} disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={handleEdit}>Edit Details</Button>
-                <div className="flex items-center gap-2">
-                  <select 
-                    className="bg-white border-gray-border rounded-lg px-3 py-2 text-sm focus:ring-teal-base focus:border-teal-base cursor-pointer shadow-sm"
-                    value={lead.status}
-                    onChange={(e) => handleStatusChange(e.target.value as LeadStatus)}
-                    disabled={isSubmitting}
-                  >
-                    <option value="New">New</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Quote Sent">Quote Sent</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Won">Won</option>
-                    <option value="Lost">Lost</option>
-                  </select>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+    <div className="p-10 lg:p-14 flex flex-col gap-12 lg:gap-20 bg-chef-prep/10 min-h-full">
+      <ContactHeader 
+        name={lead.companyName || lead.contactName || "Lead Detail"}
+        type="LEAD"
+        status={lead.status || "New"}
+        email={lead.email}
+        phone={lead.phone}
+        backUrl="/app/leads"
+        isEditing={isEditing}
+        isSubmitting={isSubmitting}
+        onEdit={handleEdit}
+        onSave={handleSave}
+        onCancel={() => setIsEditing(false)}
+        onConvert={handleConvertToCompany}
+      />
+
+      <ContactKPIs 
+        totalSpend={metrics.totalSpend}
+        ordersCount={metrics.ordersCount}
+        aov={metrics.aov}
+      />
+
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <ContactTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Contact & Company Details */}
-          <Card className="shadow-sm border-gray-border/60">
-            <CardHeader className="bg-gray-bg/20 border-b border-gray-border/50">
-              <CardTitle className="text-teal-dark">Contact & Lead Source</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-6">
-                <div>
-                  <span className="block text-xs font-bold text-brown/40 uppercase tracking-widest mb-1">Contact Name</span>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editData.contactName}
-                      onChange={(e) => setEditData({ ...editData, contactName: e.target.value })}
-                      className="w-full bg-white border border-gray-border rounded-lg px-2 py-1 text-sm font-bold text-brown"
-                    />
-                  ) : (
-                    <div className="font-bold text-brown">
-                      {lead.contactName || "N/A"}
-                    </div>
-                  )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+        {/* Main Content Area */}
+        <div className="lg:col-span-8 space-y-10 lg:space-y-12">
+          {activeTab === "overview" && (
+            <div className="space-y-10 lg:space-y-12 animate-in fade-in slide-in-from-left-6 duration-700">
+              {/* Detailed Info Card */}
+              <Card className="bg-white border border-chef-charcoal/5 shadow-soft-mid rounded-[40px] overflow-hidden">
+                <div className="px-10 py-10 border-b border-chef-charcoal/[0.03] bg-chef-prep/20">
+                  <h3 className="text-3xl font-black text-chef-charcoal tracking-tight leading-none">Lead Intelligence</h3>
+                  <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.25em] mt-3">Foundational Data Verification</p>
                 </div>
-                <div>
-                  <span className="block text-xs font-bold text-brown/40 uppercase tracking-widest mb-1">Phone Number</span>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editData.phone}
-                      onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                      className="w-full bg-white border border-gray-border rounded-lg px-2 py-1 text-sm font-bold text-brown"
-                    />
-                  ) : (
-                    <div className="font-bold text-brown flex items-center gap-1.5">
-                      <Phone className="w-4 h-4 text-teal-base/40" /> 
-                      {lead.phone || "N/A"}
+                <CardContent className="p-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-16 gap-x-16">
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-black text-chef-muted uppercase tracking-[0.2em] block opacity-40">Decision Maker</span>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editData.contactName}
+                          onChange={(e) => setEditData({ ...editData, contactName: e.target.value })}
+                          className="w-full bg-chef-prep/50 border border-chef-charcoal/5 rounded-[18px] px-5 py-4 text-sm font-black text-chef-charcoal focus:ring-4 focus:ring-accent-fresh/5 focus:bg-white transition-all outline-none"
+                        />
+                      ) : (
+                        <p className="font-black text-chef-charcoal text-2xl tracking-tighter">{lead.contactName || "—"}</p>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <span className="block text-xs font-bold text-brown/40 uppercase tracking-widest mb-1">Catering Need</span>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editData.cateringNeed}
-                      onChange={(e) => setEditData({ ...editData, cateringNeed: e.target.value })}
-                      className="w-full bg-white border border-gray-border rounded-lg px-2 py-1 text-sm font-bold text-brown"
-                    />
-                  ) : (
-                    <div className="font-bold text-brown flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-teal-base/40" /> 
-                      {lead.cateringNeed || "General Inquiry"}
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-black text-chef-muted uppercase tracking-[0.2em] block opacity-40">Catering Perspective</span>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editData.cateringNeed}
+                          onChange={(e) => setEditData({ ...editData, cateringNeed: e.target.value })}
+                          className="w-full bg-chef-prep/50 border border-chef-charcoal/5 rounded-[18px] px-5 py-4 text-sm font-black text-chef-charcoal focus:ring-4 focus:ring-accent-fresh/5 focus:bg-white transition-all outline-none"
+                        />
+                      ) : (
+                        <p className="font-black text-chef-charcoal text-2xl tracking-tighter">{lead.cateringNeed || "General Profile"}</p>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <span className="block text-xs font-bold text-brown/40 uppercase tracking-widest mb-1">Estimated Group Size</span>
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      value={editData.estimatedGroupSize}
-                      onChange={(e) => setEditData({ ...editData, estimatedGroupSize: Number(e.target.value) })}
-                      className="w-full bg-white border border-gray-border rounded-lg px-2 py-1 text-sm font-bold text-brown"
-                    />
-                  ) : (
-                    <div className="font-bold text-brown flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-teal-base/40" /> 
-                      {lead.estimatedGroupSize || 0} people
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-black text-chef-muted uppercase tracking-[0.2em] block opacity-40">Engagement Scale</span>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={editData.estimatedGroupSize}
+                          onChange={(e) => setEditData({ ...editData, estimatedGroupSize: Number(e.target.value) })}
+                          className="w-full bg-chef-prep/50 border border-chef-charcoal/5 rounded-[18px] px-5 py-4 text-sm font-black text-chef-charcoal focus:ring-4 focus:ring-accent-fresh/5 focus:bg-white transition-all outline-none"
+                        />
+                      ) : (
+                        <p className="font-black text-chef-charcoal text-2xl tracking-tighter tabular-nums">{lead.estimatedGroupSize || 0} <span className="text-[11px] text-chef-muted uppercase tracking-widest ml-1 opacity-30">Participants</span></p>
+                      )}
                     </div>
-                  )}
-                </div>
-                
-                <div className="col-span-1 md:col-span-2 pt-6 border-t border-gray-border/50">
-                  <span className="block text-xs font-bold text-brown/40 uppercase tracking-widest mb-2">Original Inquiry Notes</span>
-                  {isEditing ? (
-                    <textarea 
-                      className="w-full p-4 bg-white text-brown text-sm border border-gray-border rounded-xl focus:ring-teal-base focus:border-teal-base"
-                      rows={4}
-                      value={editData.notes}
-                      onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
-                    />
-                  ) : (
-                    <div className="p-4 bg-teal-base/5 text-brown text-sm border border-teal-base/10 rounded-xl italic leading-relaxed">
-                      {lead.notes || "No specific inquiry details provided."}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Activity Timeline */}
-          <Card className="shadow-sm border-gray-border/60">
-            <CardHeader className="bg-gray-bg/20 border-b border-gray-border/50">
-              <CardTitle className="text-teal-dark">Lead History</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <StatusTimeline
-                entityType="LEAD"
-                entityId={lead.id}
-                seedEvents={[
-                  {
-                    label: `Lead created via ${lead.source || lead.utm_source || "Web Form"}`,
-                    timestamp: lead.createdAt?.seconds ? lead.createdAt.seconds * 1000 : undefined,
-                    color: "bg-orange",
-                  },
-                ]}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar Info */}
-        <div className="space-y-6">
-          {/* Assignment Card */}
-          <Card className="shadow-sm border-gray-border/60">
-            <CardHeader className="bg-gray-bg/20 border-b border-gray-border/50">
-              <CardTitle className="text-sm uppercase tracking-widest font-bold text-brown/60">Lead Ownership</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              <div>
-                <span className="block text-[10px] font-bold text-brown/40 uppercase tracking-widest mb-2">Assigned Rep</span>
-                {isEditing ? (
-                  <select
-                    value={editData.assignedRepId}
-                    onChange={(e) => setEditData({ ...editData, assignedRepId: e.target.value })}
-                    className="w-full bg-white border border-gray-border rounded-lg px-3 py-2 text-sm font-medium text-teal-dark"
-                  >
-                    <option value="">Unassigned</option>
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>{u.displayName}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="flex items-center gap-3 p-3 bg-gray-bg/50 rounded-xl border border-gray-border/50">
-                    <div className="h-10 w-10 rounded-full bg-teal-base/20 flex items-center justify-center text-teal-dark font-bold">
-                      {(lead.assignedRepName || "U")[0]}
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-brown">{lead.assignedRepName || "Unassigned"}</div>
-                      <div className="text-[10px] text-brown/40 font-medium">Sales Representative</div>
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-black text-chef-muted uppercase tracking-[0.2em] block opacity-40">Lifecycle Protocol</span>
+                      <div className="mt-1 flex relative">
+                        <select 
+                          className="bg-chef-prep/50 border border-chef-charcoal/5 rounded-[18px] px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-chef-charcoal cursor-pointer hover:bg-chef-charcoal hover:text-white transition-all outline-none appearance-none min-w-[200px] shadow-soft-low"
+                          value={lead.status}
+                          onChange={(e) => handleStatusChange(e.target.value as LeadStatus)}
+                          disabled={isSubmitting}
+                        >
+                          <option value="New">NEW INQUIRY</option>
+                          <option value="Contacted">VERIFIED/CONTACTED</option>
+                          <option value="Quote Sent">STRATEGY SENT</option>
+                          <option value="Approved">EXECUTIVE APPROVAL</option>
+                          <option value="Won">CONTRACT CLINCHED</option>
+                          <option value="Lost">OPPORTUNITY DISSOLVED</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </CardContent>
+              </Card>
 
-              <div className="pt-4 border-t border-gray-border/50">
-                <div className="flex items-center gap-2 text-xs text-brown/60 bg-teal-base/5 p-3 rounded-lg border border-teal-base/10">
-                  <Clock className="h-3 w-3" />
-                  <span>Time in state tracked automatically</span>
+              {/* Activity History */}
+              <Card className="bg-white border border-chef-charcoal/5 shadow-soft-mid rounded-[40px] overflow-hidden">
+                <div className="px-10 py-10 border-b border-chef-charcoal/[0.03] bg-chef-prep/20">
+                  <h3 className="text-3xl font-black text-chef-charcoal tracking-tight leading-none">Event Stream</h3>
+                  <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.25em] mt-3">Temporal Activity Tracking</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                <CardContent className="p-10">
+                  <StatusTimeline
+                    entityType="LEAD"
+                    entityId={lead.id}
+                    seedEvents={[
+                      {
+                        label: `Lead Entry via ${lead.source || lead.utm_source || "Web Node"}`,
+                        timestamp: lead.createdAt?.seconds ? lead.createdAt.seconds * 1000 : undefined,
+                        color: "bg-accent-fresh",
+                      },
+                    ]}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-          {/* Quick Actions */}
-          <Card className="shadow-sm border-gray-border/60">
-             <CardHeader className="bg-gray-bg/20 border-b border-gray-border/50">
-              <CardTitle className="text-sm uppercase tracking-widest font-bold text-brown/60">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6 flex flex-col gap-3">
-              <Button variant="outline" className="w-full justify-start text-xs h-9" asChild>
-                <a href={`mailto:${lead.email}`}>
-                  <Mail className="w-3.5 h-3.5 mr-2" />
-                  Send Email
-                </a>
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-xs h-9"
-                onClick={handleConvertToCompany}
-                disabled={isConverting}
-              >
-                <UserPlus className="w-3.5 h-3.5 mr-2" />
-                {isConverting ? "Converting..." : lead?.companyId ? "View Company" : "Convert to Company"}
-              </Button>
-              {(lead.status === "Contacted" || lead.status === "Quote Sent" || lead.status === "Approved") && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-xs h-9"
-                  onClick={handleCreateOrder}
-                >
-                  <ShoppingCart className="w-3.5 h-3.5 mr-2" />
-                  Create Order
+          {activeTab === "orders" && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
+              <Card className="bg-white border border-chef-charcoal/5 shadow-soft-mid rounded-[40px] overflow-hidden p-24 text-center">
+                <h3 className="text-3xl font-black text-chef-charcoal tracking-tight mb-4 uppercase">Order Perspective</h3>
+                <p className="text-[11px] font-black text-chef-muted uppercase tracking-[0.25em] mb-12 max-w-md mx-auto leading-loose">Transactional history will be synthesized after record conversion to Company / CRM node.</p>
+                <Button onClick={handleCreateOrder} className="h-16 px-12 rounded-[24px] bg-chef-charcoal text-white shadow-soft-mid text-[10px] font-black uppercase tracking-[0.3em] transition-all hover:scale-[1.03] active:scale-[0.98]">
+                  Initialize First Order
                 </Button>
-              )}
-              <Button variant="outline" className="w-full justify-start text-xs h-9" asChild>
-                <Link href="/app/menus">
-                  <UtensilsCrossed className="w-3.5 h-3.5 mr-2" />
-                  View Menu Options
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "communications" && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
+              <Card className="bg-white border border-chef-charcoal/5 shadow-soft-mid rounded-[40px] overflow-hidden p-24 text-center">
+                <h3 className="text-3xl font-black text-chef-charcoal tracking-tight mb-4 uppercase">Communication Matrix</h3>
+                <p className="text-[11px] font-black text-chef-muted uppercase tracking-[0.25em] max-w-sm mx-auto leading-loose">Omni-channel correspondence sync and telephony logs scheduled for next executive iteration.</p>
+              </Card>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar Panel */}
+        <div className="lg:col-span-4">
+          <ContactSidePanel 
+            tags={["VERIFIED LEAD", lead.source || "WEB", "EXECUTIVE STATUS"]}
+            notes={lead.notes || ""}
+            assignedRep={assignedRep}
+            onUpdateNotes={(newNotes) => handleSave()}
+          />
         </div>
       </div>
     </div>

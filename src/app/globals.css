@@ -1,30 +1,122 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fira+Code:wght@300..700&family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap');
 @import "tailwindcss";
+@import "../styles/design-system.css";
 
 @layer base {
   :root {
     --font-poppins: 'Poppins', sans-serif;
-    --font-dm-sans: 'DM Sans', sans-serif;
-    --font-fira-sans: 'Fira Sans', sans-serif;
+    --font-inter: 'Inter', sans-serif;
     --font-fira-code: 'Fira Code', monospace;
+
+    /* Theme Variables - Light (Cream/Teal-Dark) */
+    --teal-base: #54BFA5;
+    --teal-dark: #1C5F56;
+    --gold: #E9C559;
+    --cream: #f8f5ee;
+    --brown: #5A3A1F;
+    --white: #FFFFFF;
+    --orange: #D36200;
+    --gray-bg: #f4f1ea;
+    --gray-border: #E5E5E3;
+    
+    --app-bg: var(--cream);
+    --card-bg: rgba(255, 255, 255, 0.4);
+    --card-border: rgba(255, 255, 255, 0.2);
+    --text-primary: var(--teal-dark);
+    --text-secondary: var(--brown);
+    --text-muted: rgba(90, 58, 31, 0.4); /* brown/40 */
+
+    /* Veranda Design System (Light) */
+    --veranda-surface: #FAFAF7;
+    --veranda-primary: #0D7377;
+    --veranda-secondary: #E07B54;
+    --veranda-on-surface: #1a1c1b;
+    --veranda-outline: #4a5555;
+    --veranda-container-low: #f4f4f1;
+    --veranda-container: #eeeeeb;
+    --veranda-container-high: #e8e8e5;
+  }
+
+  .dark {
+    /* Theme Variables - Dark (Obsidian Teal) */
+    --teal-base: #54BFA5;
+    --teal-dark: #A5D6CD; /* Lighter teal for text in dark mode */
+    --gold: #F2D682;
+    --cream: #091413; /* Obsidian Teal Background */
+    --brown: #F1EFEC; /* Soft Cream for primary text */
+    --white: #112220; /* Darker surfaces */
+    --orange: #FF8F33;
+    --gray-bg: #0C1A19;
+    --gray-border: rgba(165, 214, 205, 0.1);
+    
+    --app-bg: var(--cream);
+    --card-bg: rgba(17, 34, 32, 0.6);
+    --card-border: rgba(84, 191, 165, 0.1);
+    --text-primary: var(--brown);
+    --text-secondary: rgba(241, 239, 236, 0.8);
+    --text-muted: rgba(165, 214, 205, 0.4);
+
+    /* Veranda Fallback for Dark Mode (if needed) */
+    --veranda-surface: #091413;
+    --veranda-primary: #54BFA5;
+    --veranda-secondary: #FF8F33;
+    --veranda-on-surface: #F1EFEC;
+    --veranda-outline: rgba(165, 214, 205, 0.4);
+    --veranda-container-low: #0C1A19;
+    --veranda-container: #112220;
+    --veranda-container-high: #1c2e2c;
   }
 }
 
 @theme {
-  --color-teal-base: #54BFA5;
-  --color-teal-dark: #1C5F56;
-  --color-gold: #E9C559;
-  --color-cream: #f8f5ee;
-  --color-brown: #5A3A1F;
-  --color-white: #FFFFFF;
-  --color-orange: #D36200;
-  --color-gray-bg: #f4f1ea;
-  --color-gray-border: #E5E5E3;
+  --color-teal-base: var(--teal-base);
+  --color-teal-dark: var(--teal-dark);
+  --color-gold: var(--gold);
+  --color-cream: var(--cream);
+  --color-brown: var(--brown);
+  --color-white: var(--white);
+  --color-orange: var(--orange);
+  --color-gray-bg: var(--gray-bg);
+  --color-gray-border: var(--gray-border);
+
+  /* Veranda Semantic Tokens */
+  --color-v-surface: var(--veranda-surface);
+  --color-v-primary: var(--veranda-primary);
+  --color-v-secondary: var(--veranda-secondary);
+  --color-v-on-surface: var(--veranda-on-surface);
+  --color-v-outline: var(--veranda-outline);
+  --color-v-container-low: var(--veranda-container-low);
+  --color-v-container: var(--veranda-container);
+  --color-v-container-high: var(--veranda-container-high);
+
+  /* Deal Specific Colors */
+  --color-deal-blue: #2563EB;
+  --color-deal-yellow: #FACC15;
+  --color-deal-black: #171717;
+  --color-deal-gray: #E5E5E5;
 
   --font-heading: var(--font-poppins), sans-serif;
-  --font-body: var(--font-dm-sans), sans-serif;
-  --font-fira: var(--font-fira-sans), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
   --font-mono: var(--font-fira-code), monospace;
+
+  /* Glassmorphism Tokens */
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  --shadow-ambient: 0 24px 32px -12px rgba(26, 28, 27, 0.04);
+  --shadow-ambient-heavy: 0 42px 64px -12px rgba(0, 0, 0, 0.25);
+}
+
+@utility bg-glass {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+}
+
+@utility bg-glass-dark {
+  background: rgba(13, 26, 25, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
 }
 
 @utility container-rig {
@@ -64,10 +156,64 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     color: var(--color-teal-dark);
+    font-weight: 500;
   }
+
+  /* Global Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(28, 95, 86, 0.1);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(28, 95, 86, 0.3);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(84, 191, 165, 0.1);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(84, 191, 165, 0.3);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(28, 95, 86, 0.1) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: rgba(84, 191, 165, 0.1) transparent;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+@utility bg-app-gradient {
+  background-image: linear-gradient(135deg, var(--cream) 0%, var(--gray-bg) 40%, var(--gray-bg) 100%);
+  background-attachment: fixed;
 }

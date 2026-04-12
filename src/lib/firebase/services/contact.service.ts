@@ -142,3 +142,15 @@ export async function getAllContacts(): Promise<Contact[]> {
     return [];
   }
 }
+export async function deleteContact(contactId: string) {
+  try {
+    const contactRef = doc(db, "contacts", contactId);
+    await updateDoc(contactRef, {
+      archived: true,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error archiving contact:", error);
+    throw error;
+  }
+}

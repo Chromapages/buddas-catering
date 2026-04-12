@@ -41,3 +41,9 @@ export function formatDate(dateValue: any, formatStr: string = "MMM d, yyyy"): s
     return "Invalid Date";
   }
 }
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
+}

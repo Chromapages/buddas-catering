@@ -12,8 +12,10 @@ import {
   LayoutGrid,
   List,
   Trash2,
-  X
+  X,
+  Target
 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/shared/Card";
 import { Input } from "@/components/shared/Input";
 import { Select } from "@/components/shared/Select";
 import { Button } from "@/components/shared/Button";
@@ -32,6 +34,8 @@ import toast from "react-hot-toast";
 import { sendEmail } from "@/lib/utils/notifications";
 import { Mail as MailIcon, Send } from "lucide-react";
 import { Textarea } from "@/components/shared/Textarea";
+import { LeadBentoGrid } from "@/components/crm/LeadBentoGrid";
+import { useEffect } from "react";
 
 type SortField = "company" | "date" | "size" | "status";
 type SortOrder = "asc" | "desc";
@@ -47,6 +51,18 @@ export default function LeadsPage() {
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [repFilter, setRepFilter] = useState(() => (isRep && user?.uid ? user.uid : "All"));
+  const [viewMode, setViewMode] = useState<'bento' | 'classic'>('bento');
+
+  // Persist View Mode
+  useEffect(() => {
+    const saved = localStorage.getItem('crm-leads-view');
+    if (saved === 'classic') setViewMode('classic');
+  }, []);
+
+  const handleToggleView = (mode: 'bento' | 'classic') => {
+    setViewMode(mode);
+    localStorage.setItem('crm-leads-view', mode);
+  };
   
   // React Query Fetching
   const { data: leads = [], isLoading: leadsLoading } = useQuery({
@@ -256,28 +272,40 @@ export default function LeadsPage() {
   };
 
   return (
-    <div className="relative flex h-full flex-col overscroll-y-contain p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div className="relative flex h-full flex-col overscroll-y-contain p-8 gap-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold font-heading text-teal-dark">Leads</h1>
-          <p className="text-sm text-brown/70 mt-1">Manage and track incoming catering inquiries.</p>
+          <h1 className="text-4xl font-black text-chef-charcoal tracking-tight leading-none mb-2">Leads</h1>
+          <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.2em]">Management & Performance Tracking</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex bg-gray-bg/50 p-1 rounded-lg border border-gray-border/50">
-            <Button variant="secondary" size="sm" className="h-8 px-3 rounded-md shadow-sm">
-              <List className="w-4 h-4 mr-2" />
-              Table
-            </Button>
-            <Button variant="ghost" size="sm" asChild className="h-8 px-3 rounded-md">
-              <Link href="/app/leads/board">
-                <LayoutGrid className="w-4 h-4 mr-2" />
-                Board
-              </Link>
-            </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex bg-chef-prep/50 p-1.5 rounded-[20px] border border-chef-charcoal/5 shadow-soft-low">
+            <button 
+              onClick={() => handleToggleView('classic')}
+              className={cn(
+                "h-9 px-5 rounded-[14px] text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95",
+                viewMode === 'classic' 
+                  ? "bg-white text-chef-charcoal shadow-soft-mid border border-chef-charcoal/5" 
+                  : "text-chef-muted hover:text-chef-charcoal"
+              )}
+            >
+              <List size={14} /> Classic
+            </button>
+            <button 
+              onClick={() => handleToggleView('bento')}
+              className={cn(
+                "h-9 px-5 rounded-[14px] text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95",
+                viewMode === 'bento' 
+                  ? "bg-white text-chef-charcoal shadow-soft-mid border border-chef-charcoal/5" 
+                  : "text-chef-muted hover:text-chef-charcoal"
+              )}
+            >
+              <LayoutGrid size={14} /> Intelligence
+            </button>
           </div>
           <Button
             variant="outline"
-            className="hidden sm:flex"
+            className="hidden sm:flex border-v-outline/20 bg-v-surface hover:bg-v-container h-12 rounded-[16px] px-6 text-[10px] font-black uppercase tracking-widest transition-all"
             onClick={() =>
               exportToCsv(
                 sortedLeads.map((l) => ({
@@ -294,301 +322,328 @@ export default function LeadsPage() {
           >
             Export CSV
           </Button>
-          <Button asChild>
+          <Button asChild className="h-12 px-8 rounded-[20px] bg-chef-charcoal text-white shadow-soft-mid border-none text-[10px] font-black uppercase tracking-widest hover:scale-10 shadow-accent-fresh/20 transition-all active:scale-95">
             <Link href="/app/leads/new">Add Lead</Link>
           </Button>
         </div>
       </div>
 
-      {/* Inline Filters Bar */}
-      <div className="bg-white px-5 py-3.5 rounded-t-xl border border-gray-border flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4 flex-1">
-          {/* Search */}
-          <div className="relative w-full sm:w-56 group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-brown/40 group-focus-within:text-teal-base transition-colors" />
-            <Input 
-              placeholder="Search companies, names..." 
-              className="pl-9 h-9 text-sm border-gray-border bg-gray-bg/30 focus:bg-white"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+      {viewMode === 'bento' ? (
+        <div className="flex-1 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <LeadBentoGrid 
+            leads={sortedLeads} 
+            onSelect={(lead) => {
+              setSelectedLead(lead);
+              setIsSlideOverOpen(true);
+            }} 
+          />
+        </div>
+      ) : (
+        <Card className="flex-1 flex flex-col bg-white border border-chef-charcoal/5 shadow-soft-mid rounded-[40px] overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
+        {/* Unified Header & Filters */}
+        <div className="px-8 py-8 flex flex-wrap items-center justify-between gap-6 border-b border-chef-charcoal/10 bg-chef-prep/30">
+          <div className="flex flex-wrap items-center gap-6 flex-1">
+            {/* Search */}
+            <div className="relative w-full sm:w-96 group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-chef-muted group-focus-within:text-accent-fresh transition-colors" />
+              <Input 
+                placeholder="Search leads database..." 
+                className="pl-14 h-14 text-sm border border-transparent bg-chef-prep/50 focus:bg-white focus:border-accent-fresh/20 rounded-[20px] placeholder:text-chef-muted/40 transition-all focus:ring-0 shadow-soft-low"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
 
-          <div className="h-6 w-px bg-gray-border/60 hidden sm:block" />
+            <div className="h-8 w-px bg-v-outline/10 hidden sm:block" />
 
-          {/* Status Pills */}
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-            {[
-              { id: "all", label: "All" },
-              { id: "New", label: "New" },
-              { id: "Contacted", label: "Contacted" },
-              { id: "Quote Sent", label: "Sent" },
-              { id: "Approved", label: "Approved" },
-              { id: "Lost", label: "Lost" },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setStatusFilter(f.id === "all" ? "All" : f.id)}
+            {/* Status Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              {[
+                { id: "all", label: "All" },
+                { id: "New", label: "New" },
+                { id: "Contacted", label: "Contacted" },
+                { id: "Quote Sent", label: "Sent" },
+                { id: "Approved", label: "Approved" },
+                { id: "Lost", label: "Lost" },
+              ].map((f) => {
+                const isActive = (statusFilter === f.id || (statusFilter === "All" && f.id === "all"));
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setStatusFilter(f.id === "all" ? "All" : f.id)}
+                    className={cn(
+                      "px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-full transition-all border active:scale-95",
+                      isActive
+                        ? "bg-chef-charcoal text-white border-chef-charcoal shadow-soft-mid"
+                        : "bg-white text-chef-muted border-chef-charcoal/5 hover:border-chef-charcoal/20 hover:text-chef-charcoal shadow-soft-low"
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="h-8 w-px bg-v-outline/10 hidden sm:block" />
+
+            {/* Waitlist Toggle Chips */}
+            <div className="flex bg-v-container p-1 rounded-xl border border-v-outline/10 text-[9px] font-black uppercase tracking-widest">
+              <button 
+                onClick={() => setWaitlistFilter("All")}
                 className={cn(
-                  "px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-tight rounded-full transition-all border",
-                  (statusFilter === f.id || (statusFilter === "All" && f.id === "all"))
-                    ? "bg-teal-base text-white border-teal-base shadow-sm"
-                    : "bg-white text-brown/50 border-gray-border hover:border-brown/30"
+                  "px-4 py-2 rounded-lg transition-all",
+                  waitlistFilter === "All" ? "bg-white text-v-on-surface shadow-sm" : "text-v-on-surface/40 hover:text-v-on-surface"
                 )}
               >
-                {f.label}
+                Everyone
               </button>
-            ))}
+              <button 
+                onClick={() => setWaitlistFilter("Active")}
+                className={cn(
+                  "px-4 py-2 rounded-lg transition-all flex items-center gap-1",
+                  waitlistFilter === "Active" ? "bg-white text-v-on-surface shadow-sm" : "text-v-on-surface/40 hover:text-v-on-surface"
+                )}
+              >
+                Active
+              </button>
+              <button 
+                onClick={() => setWaitlistFilter("Waitlist")}
+                className={cn(
+                  "px-4 py-2 rounded-lg transition-all flex items-center gap-1",
+                  waitlistFilter === "Waitlist" ? "bg-white text-v-secondary shadow-sm" : "text-v-on-surface/40 hover:text-v-on-surface"
+                )}
+              >
+                Waitlist
+              </button>
+            </div>
           </div>
 
-          <div className="h-6 w-px bg-gray-border/60 hidden sm:block" />
-
-          {/* Waitlist Toggle Chips */}
-          <div className="flex bg-gray-bg/60 p-0.5 rounded-lg border border-gray-border text-[11px] font-bold">
-            <button 
-              onClick={() => setWaitlistFilter("All")}
-              className={cn(
-                "px-2.5 py-1 rounded-md transition-colors",
-                waitlistFilter === "All" ? "bg-white text-teal-dark shadow-sm" : "text-brown/40 hover:text-brown/60"
-              )}
-            >
-              Everyone
-            </button>
-            <button 
-              onClick={() => setWaitlistFilter("Active")}
-              className={cn(
-                "px-2.5 py-1 rounded-md transition-colors flex items-center gap-1",
-                waitlistFilter === "Active" ? "bg-white text-teal-dark shadow-sm" : "text-brown/40 hover:text-brown/60"
-              )}
-            >
-              Active
-            </button>
-            <button 
-              onClick={() => setWaitlistFilter("Waitlist")}
-              className={cn(
-                "px-2.5 py-1 rounded-md transition-colors flex items-center gap-1",
-                waitlistFilter === "Waitlist" ? "bg-white text-orange shadow-sm" : "text-brown/40 hover:text-brown/60"
-              )}
-            >
-              Waitlist
-            </button>
-          </div>
+          {/* Rep Filter (Admin only) */}
+          {!isRep && (
+            <div className="w-full sm:w-auto">
+              <Select 
+                className="w-full sm:w-56 h-14 text-[10px] font-black border-none bg-chef-prep/50 focus:bg-white rounded-[20px] uppercase tracking-widest shadow-soft-low"
+                value={repFilter}
+                onChange={(e) => setRepFilter(e.target.value)}
+                options={[
+                  { value: "All", label: "ALL REPS" },
+                  ...Object.entries(reps).map(([id, name]) => ({
+                    value: id,
+                    label: (name as string).toUpperCase()
+                  }))
+                ]}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Rep Filter (Admin only) */}
-        {!isRep && (
-          <div className="w-full sm:w-auto">
-            <Select 
-              className="w-full sm:w-36 h-9 text-xs font-bold border-gray-border bg-gray-bg/30"
-              value={repFilter}
-              onChange={(e) => setRepFilter(e.target.value)}
-              options={[
-                { value: "All", label: "ALL REPS" },
-                ...Object.entries(reps).map(([id, name]) => ({
-                  value: id,
-                  label: (name as string).toUpperCase()
-                }))
-              ]}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Table */}
-      <div className="bg-white border-x border-b border-gray-border rounded-b-xl shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-gray-bg border-b border-gray-border text-brown/70 font-medium">
-              <tr>
-                <th className="px-6 py-4 w-10">
-                  <input 
-                    type="checkbox" 
-                    className="rounded border-gray-border text-teal-base focus:ring-teal-base h-4 w-4"
-                    checked={selectedIds.length === paginatedLeads.length && paginatedLeads.length > 0}
-                    onChange={toggleSelectAll}
-                  />
-                </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("company")}>
-                  Company <SortIcon field="company" />
-                </th>
-                <th className="px-6 py-4">Contact</th>
-                <th className="px-6 py-4">Source</th>
-                <th className="px-6 py-4">Event Type</th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("size")}>
-                  Size <SortIcon field="size" />
-                </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("status")}>
-                  Status <SortIcon field="status" />
-                </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-200/50 transition-colors" onClick={() => handleSort("date")}>
-                  Date Created <SortIcon field="date" />
-                </th>
-                <th className="px-6 py-4">Heat</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-border text-brown">
-              {loading ? (
+        {/* Table Body */}
+        <CardContent className="p-0 overflow-hidden flex-1 flex flex-col bg-white">
+          <div className="overflow-x-auto flex-1 custom-scrollbar">
+            <table className="w-full text-left text-sm whitespace-nowrap border-separate border-spacing-0">
+              <thead className="bg-chef-prep/30 border-b border-chef-charcoal/5 text-[10px] font-black uppercase tracking-[0.25em] text-chef-muted">
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-brown/50">
-                    <div className="flex items-center justify-center gap-2">
-                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-teal-base border-t-transparent"></div>
-                       Loading leads...
-                    </div>
-                  </td>
+                  <th className="px-8 py-6 w-10 sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">
+                    <input 
+                      type="checkbox" 
+                      className="rounded-lg border-chef-charcoal/20 text-accent-fresh focus:ring-accent-fresh bg-white h-5 w-5"
+                      checked={selectedIds.length === paginatedLeads.length && paginatedLeads.length > 0}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
+                  <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("company")}>
+                    Company <SortIcon field="company" />
+                  </th>
+                  <th className="px-8 py-6 sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">Contact</th>
+                  <th className="px-8 py-6 sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">Source</th>
+                  <th className="px-8 py-6 sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">Event Type</th>
+                  <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("size")}>
+                    Size <SortIcon field="size" />
+                  </th>
+                  <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("status")}>
+                    Status <SortIcon field="status" />
+                  </th>
+                  <th className="px-8 py-6 cursor-pointer hover:bg-chef-charcoal/5 transition-colors sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5" onClick={() => handleSort("date")}>
+                    Date Created <SortIcon field="date" />
+                  </th>
+                  <th className="px-8 py-6 sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">Heat</th>
+                  <th className="px-8 py-6 text-right sticky top-0 bg-chef-prep/50 backdrop-blur-md border-b border-chef-charcoal/5">Actions</th>
                 </tr>
-              ) : paginatedLeads.length > 0 ? (
-                paginatedLeads.map((lead) => (
-                  <tr 
-                    key={lead.id} 
-                    className={`hover:bg-gray-bg/50 transition-colors group cursor-pointer ${selectedIds.includes(lead.id) ? 'bg-teal-base/5' : ''}`}
-                    onClick={() => {
-                      setSelectedLead(lead);
-                      setIsSlideOverOpen(true);
-                    }}
-                  >
-                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                       <input 
-                        type="checkbox" 
-                        className="rounded border-gray-border text-teal-base focus:ring-teal-base h-4 w-4"
-                        checked={selectedIds.includes(lead.id)}
-                        onChange={(e) => toggleSelect(lead.id, e as any)}
-                       />
-                    </td>
-                    <td className="px-6 py-4 font-semibold">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="flex items-center gap-2">
-                          {lead.companyName || "N/A"}
-                          {lead.isWaitlist && (
-                            <Badge variant="neutral" className="bg-orange/10 text-orange border-orange/20 text-[9px] px-1 py-0 uppercase">
-                              Waitlist
-                            </Badge>
-                          )}
-                          {lead.email && duplicateEmails.has(lead.email.toLowerCase()) && (
-                            <Badge variant="warning" className="text-[10px] px-1.5 py-0" title="Possible duplicate — same email exists in another lead">
-                              Duplicate
-                            </Badge>
-                          )}
-                        </span>
+              </thead>
+              <tbody className="divide-y divide-chef-charcoal/[0.03] text-chef-charcoal">
+                {loading ? (
+                  <tr>
+                    <td colSpan={10} className="px-6 py-32 text-center">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                         <div className="animate-spin rounded-full h-10 w-10 border-2 border-v-primary border-t-transparent shadow-lg shadow-v-primary/20"></div>
+                         <span className="font-black uppercase tracking-[0.2em] text-[10px] text-v-on-surface/30">Syncing CRM Intelligence...</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-brown/70">{lead.contactName || lead.email}</td>
-                    <td className="px-6 py-4">
-                      {lead.source ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-gray-bg px-2 py-0.5 rounded border border-gray-border/50 text-brown/50 cursor-help" title={lead.utm_campaign}>
-                          {lead.source}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-brown/30">Direct</span>
+                  </tr>
+                ) : paginatedLeads.length > 0 ? (
+                  paginatedLeads.map((lead) => (
+                    <tr 
+                      key={lead.id} 
+                      className={cn(
+                        "hover:bg-v-container/40 transition-all group cursor-pointer border-l-4 border-transparent",
+                        selectedIds.includes(lead.id) ? "bg-v-container border-v-primary" : ""
                       )}
-                    </td>
-                    <td className="px-6 py-4">{lead.cateringNeed || "Inquiry"}</td>
-                    <td className="px-6 py-4">{lead.estimatedGroupSize || 0} ppl</td>
-                    <td className="px-6 py-4">{getStatusBadge(lead.status)}</td>
-                    <td className="px-6 py-4 text-brown/70">
-                      {formatDate(lead.createdAt, "MMM d, yyyy")}
-                    </td>
-                    <td className="px-6 py-4">
-                      {(() => {
-                        const score = calculateLeadHeat(lead);
-                        const meta = getHeatMetadata(score);
-                        return (
-                          <div className={cn(
-                            "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1",
-                            meta.bg,
-                            meta.color,
-                            meta.ring
-                          )}>
-                            {meta.label}
-                          </div>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-teal-base hover:bg-teal-base/5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setLogState({
-                            isOpen: true,
-                            entityId: lead.id,
-                            entityType: "LEAD",
-                            entityName: lead.companyName || lead.contactName || "Lead",
-                          });
-                        }}
-                      >
-                         Log
-                      </Button>
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        View
-                      </Button>
-                      <button className="p-2 text-brown/40 hover:text-brown transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      onClick={() => {
+                        setSelectedLead(lead);
+                        setIsSlideOverOpen(true);
+                       }}
+                    >
+                      <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
+                         <input 
+                          type="checkbox" 
+                          className="rounded border-v-outline/40 text-v-primary focus:ring-v-primary bg-white h-4 w-4"
+                          checked={selectedIds.includes(lead.id)}
+                          onChange={(e) => toggleSelect(lead.id, e as any)}
+                         />
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="flex items-center gap-3 font-black text-v-on-surface tracking-tight">
+                            {lead.companyName || "N/A"}
+                            {lead.isWaitlist && (
+                              <Badge className="bg-v-secondary/10 text-v-secondary border-v-secondary/20 text-[9px] px-2 py-0 border font-black uppercase tracking-widest rounded-md">
+                                Waitlist
+                              </Badge>
+                            )}
+                            {lead.email && duplicateEmails.has(lead.email.toLowerCase()) && (
+                              <Badge className="bg-v-primary/10 text-v-primary border-v-primary/20 text-[9px] px-2 py-0 border font-black uppercase tracking-widest rounded-md" title="Possible duplicate">
+                                Duplicate
+                              </Badge>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col">
+                          <span className="font-black text-chef-charcoal/80">{lead.contactName || "—"}</span>
+                          <span className="text-[10px] text-chef-muted font-bold uppercase tracking-widest truncate max-w-[150px]">{lead.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        {lead.source ? (
+                          <span className="text-[9px] font-black uppercase tracking-[0.15em] bg-v-container px-2.5 py-1 rounded-lg border border-v-outline/10 text-v-on-surface/60 cursor-help" title={lead.utm_campaign}>
+                            {lead.source}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-black uppercase tracking-widest text-v-on-surface/10">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-5 font-black text-[10px] uppercase tracking-widest text-v-on-surface/60">{lead.cateringNeed || "Inquiry"}</td>
+                      <td className="px-6 py-5 tabular-nums font-black text-chef-charcoal">{lead.estimatedGroupSize || 0} <span className="text-[10px] font-bold text-chef-muted uppercase tracking-widest px-1">pax</span></td>
+                      <td className="px-6 py-5">
+                        <Badge className={cn(
+                          "px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-lg border-transparent",
+                          lead.status === "New" ? "bg-v-secondary/10 text-v-secondary" : "bg-v-on-surface/5 text-v-on-surface/40"
+                        )}>
+                          {lead.status}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-5 text-chef-muted text-[10px] font-black uppercase tracking-widest">
+                        {formatDate(lead.createdAt, "MMM d, yyyy")}
+                      </td>
+                      <td className="px-6 py-5">
+                        {(() => {
+                           const score = calculateLeadHeat(lead);
+                           const meta = getHeatMetadata(score);
+                           return (
+                             <div className={cn(
+                               "inline-flex items-center rounded-lg px-2.5 py-1 text-[9px] font-black uppercase tracking-widest border",
+                               meta.label === "Hot" ? "bg-accent-heat text-white border-accent-heat shadow-lg shadow-accent-heat/20" : "bg-chef-prep text-chef-muted border-chef-charcoal/10"
+                             )}>
+                               {meta.label}
+                             </div>
+                           );
+                        })()}
+                      </td>
+                      <td className="px-6 py-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-9 px-4 border-v-outline/20 text-v-on-surface hover:bg-v-container transition-all font-black text-[10px] uppercase tracking-widest rounded-xl"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLogState({
+                                isOpen: true,
+                                entityId: lead.id,
+                                entityType: "LEAD",
+                                entityName: lead.companyName || lead.contactName || "Lead",
+                              });
+                            }}
+                          >
+                             Log
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-9 px-4 text-[10px] uppercase tracking-widest font-black text-v-on-surface/40 hover:text-v-on-surface rounded-xl">
+                            View
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                   ))
+                ) : (
+                  <tr>
+                    <td colSpan={10} className="px-6 py-32 text-center text-chef-muted uppercase tracking-[0.2em] font-black text-[10px]">
+                      No Matching Records Found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-brown/50">
-                    No leads found matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination bar */}
-        <div className="mt-auto px-6 py-4 border-t border-gray-border bg-gray-bg/30 flex items-center justify-between">
-          <p className="text-sm text-brown/60">
-            Showing <span className="font-medium text-brown">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-brown">{Math.min(currentPage * itemsPerPage, filteredLeads.length)}</span> of <span className="font-medium text-brown">{filteredLeads.length}</span> results
-          </p>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <div className="text-sm font-medium text-brown px-2">
-              Page {currentPage} of {totalPages || 1}
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-2"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
 
-      {/* Batch Action Bar */}
+          {/* Pagination bar */}
+          <div className="px-8 py-6 border-t border-chef-charcoal/10 bg-chef-prep/30 flex items-center justify-between">
+            <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.15em]">
+              Perspective: <span className="text-chef-charcoal">{Math.max(0, (currentPage - 1) * itemsPerPage + 1)}</span> - <span className="text-chef-charcoal">{Math.min(currentPage * itemsPerPage, filteredLeads.length)}</span> <span className="mx-2 opacity-20">/</span> {filteredLeads.length} Total
+            </p>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-10 w-12 p-0 border-chef-charcoal/10 bg-white hover:bg-chef-prep disabled:opacity-20 rounded-xl"
+              >
+                <ChevronLeft className="w-5 h-5 text-chef-muted" />
+              </Button>
+              <div className="text-[11px] font-black text-chef-charcoal bg-white h-10 px-6 flex items-center rounded-xl border border-chef-charcoal/10 tracking-widest tabular-nums">
+                {currentPage} <span className="mx-2 opacity-20 text-[9px]">OF</span> {totalPages || 1}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="h-10 w-12 p-0 border-v-outline/20 bg-white hover:bg-v-container disabled:opacity-20 rounded-xl"
+              >
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      )}
+
       {selectedIds.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-teal-dark text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex items-center gap-3 border-r border-white/20 pr-6">
-            <div className="bg-teal-base text-teal-dark font-bold rounded-full w-6 h-6 flex items-center justify-center text-xs">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-v-on-surface/95 backdrop-blur-2xl text-white px-8 py-5 rounded-[28px] shadow-ambient-heavy border border-white/10 flex items-center gap-10 z-50 animate-in fade-in slide-in-from-bottom-8 duration-500">
+          <div className="flex items-center gap-5 border-r border-white/10 pr-10">
+            <div className="bg-v-primary/20 text-v-primary ring-1 ring-v-primary/40 font-black rounded-xl h-10 w-10 flex items-center justify-center text-sm shadow-lg shadow-v-primary/20">
               {selectedIds.length}
             </div>
-            <span className="font-medium text-sm">Leads Selected</span>
+            <span className="font-black uppercase tracking-[0.2em] text-[10px] text-white/40">Leads Under Control</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Select 
-              className="w-36 h-9 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+              className="w-40 h-10 bg-white/5 border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl focus:ring-v-primary/50"
               value=""
               onChange={(e) => handleBatchStatusUpdate(e.target.value)}
               options={[
-                { value: "", label: "Mark as...", disabled: true },
+                { value: "", label: "SET STATUS...", disabled: true },
                 { value: "New", label: "New" },
                 { value: "Contacted", label: "Contacted" },
                 { value: "Quote Sent", label: "Quote Sent" },
@@ -599,75 +654,78 @@ export default function LeadsPage() {
             />
 
             <Select 
-              className="w-36 h-9 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+              className="w-40 h-10 bg-white/5 border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl focus:ring-v-primary/50"
               value=""
               onChange={(e) => handleBatchAssign(e.target.value)}
               options={[
-                { value: "", label: "Assign to...", disabled: true },
+                { value: "", label: "ASSIGN REP...", disabled: true },
                 ...Object.entries(reps).map(([id, name]) => ({
                   value: id,
-                  label: name as string
+                  label: (name as string).toUpperCase()
                 }))
               ]}
             />
 
             <Button 
               variant="ghost" 
-              className="text-white hover:bg-white/10 h-9 px-3"
+              className="text-white hover:bg-white/5 h-10 px-6 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl"
               onClick={() => setIsBulkEmailOpen(!isBulkEmailOpen)}
             >
-              <MailIcon className="w-4 h-4 mr-2" />
-              Bulk Outreach
+              <MailIcon className="w-4 h-4 mr-2 text-v-primary" />
+              Broadcaster
             </Button>
 
             <Button 
               variant="ghost" 
-              className="text-red-400 hover:bg-red-400/10 hover:text-red-300 h-9 px-3"
+              className="text-v-secondary hover:bg-v-secondary/10 h-10 px-6 text-[10px] font-black uppercase tracking-widest rounded-xl"
               onClick={handleBatchDelete}
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Delete
+              Delete Records
             </Button>
           </div>
 
           <button 
             onClick={() => setSelectedIds([])}
-            className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors"
+            className="ml-6 p-2.5 hover:bg-white/10 rounded-full transition-all text-white/40 hover:text-white"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
           
           {/* Bulk Email Overlay */}
           {isBulkEmailOpen && (
-            <div className="absolute bottom-full left-0 right-0 mb-4 bg-white border border-gray-border rounded-2xl shadow-2xl p-6 text-brown animate-in slide-in-from-bottom-4 duration-300">
-               <div className="flex items-center justify-between mb-4">
-                 <h4 className="font-bold text-teal-dark flex items-center gap-2">
-                   <MailIcon className="h-4 w-4" />
-                   Send Bulk Email to {selectedIds.length} Leads
-                 </h4>
-                 <button onClick={() => setIsBulkEmailOpen(false)} className="text-brown/40 hover:text-brown">
-                   <X className="h-4 w-4" />
+            <div className="absolute bottom-full left-0 right-0 mb-6 bg-v-surface border border-v-outline/20 rounded-[24px] shadow-ambient-heavy p-8 text-v-on-surface animate-in slide-in-from-bottom-6 duration-500">
+               <div className="flex items-center justify-between mb-6">
+                 <div>
+                   <h4 className="font-black text-v-on-surface uppercase tracking-[0.15em] flex items-center gap-2">
+                     <MailIcon className="h-5 w-5 text-v-primary" />
+                     Omni-Channel Broadcast
+                   </h4>
+                   <p className="text-[10px] font-bold text-v-on-surface/30 uppercase tracking-widest mt-1">Targeting {selectedIds.length} Verified Records</p>
+                 </div>
+                 <button onClick={() => setIsBulkEmailOpen(false)} className="text-v-on-surface/20 hover:text-v-on-surface/60 p-2 hover:bg-v-container rounded-full transition-all">
+                   <X className="h-5 w-5" />
                  </button>
                </div>
                
-               <div className="space-y-4">
-                 <div className="text-xs text-brown/50 bg-gray-bg p-2 rounded border border-gray-border/50">
-                    <span className="font-bold">Pro-tip:</span> Use <code className="bg-white px-1 py-0.5 rounded border">{"{{name}}"}</code> to personalize the message.
+               <div className="space-y-6">
+                 <div className="text-[10px] font-black text-v-primary uppercase tracking-[0.15em] bg-v-primary/5 p-4 rounded-xl border border-v-primary/10">
+                    <span className="opacity-60">Personalization Protocol:</span> Use <code className="bg-white px-2 py-0.5 rounded shadow-sm">{"{{name}}"}</code> variable injector.
                  </div>
                  <Textarea 
-                   placeholder="Type your message here..."
-                   className="min-h-[150px] border-gray-border"
+                   placeholder="Enter executive dispatch content..."
+                   className="min-h-[200px] border-v-outline/20 bg-white/60 focus:bg-white rounded-2xl text-[13px] font-medium placeholder:text-v-on-surface/20"
                    value={bulkEmailContent}
                    onChange={(e) => setBulkEmailContent(e.target.value)}
                  />
-                 <div className="flex justify-end gap-3">
-                   <Button variant="outline" onClick={() => setIsBulkEmailOpen(false)}>Cancel</Button>
+                 <div className="flex justify-end gap-3 pt-2">
+                   <Button variant="outline" className="h-12 px-8 rounded-xl border-v-outline/20 text-[10px] font-black uppercase tracking-widest" onClick={() => setIsBulkEmailOpen(false)}>Abort Dispatch</Button>
                    <Button 
-                     className="gap-2" 
+                     className="h-12 px-8 rounded-xl bg-v-on-surface text-white shadow-lg shadow-v-on-surface/20 border-none text-[10px] font-black uppercase tracking-widest gap-2" 
                      onClick={handleSendBulkEmail}
                      disabled={isSendingBulk || !bulkEmailContent.trim()}
                    >
-                     {isSendingBulk ? "Sending..." : "Send Broadcast"}
+                     {isSendingBulk ? "Broadcasting..." : "Initialize Batch"}
                      <Send className="h-4 w-4" />
                    </Button>
                  </div>

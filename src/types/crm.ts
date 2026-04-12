@@ -76,6 +76,7 @@ export interface Contact {
   isPrimary: boolean;
   companyName?: string; // Denormalized for display
   name?: string; // Alias for fullName
+  notes?: string;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }

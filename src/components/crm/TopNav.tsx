@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { Bell, Menu, Search, LogOut, User as UserIcon, ChevronDown, Info, CheckCircle2, AlertTriangle, XCircle, Building2 } from "lucide-react";
+import { Bell, Menu, Search, LogOut, User as UserIcon, ChevronDown, Info, CheckCircle2, AlertTriangle, XCircle, Building2, HelpCircle, X } from "lucide-react";
 import { Input } from "@/components/shared/Input";
 import { useAuth } from "@/lib/firebase/context/auth";
 import { 
@@ -17,19 +19,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/shared/DropdownMenu";
-import { Badge } from "@/components/shared/Badge";
 import { cn } from "@/lib/utils";
 import { CRMNotification } from "@/types/crm";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
-  const { user, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
   const [notifications, setNotifications] = useState<CRMNotification[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+
+  const isAdmin = role === 'owner' || role === 'admin' || role === 'marketing' || role === 'ops';
 
   useEffect(() => {
     if (!user) return;
@@ -41,9 +46,9 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
-      if (searchQuery.length >= 2) {
+      if (searchQuery.length >= 2 && user && role) {
         setIsSearching(true);
-        const results = await searchCrm(searchQuery);
+        const results = await searchCrm(searchQuery, user.uid, role);
         setSearchResults(results);
         setIsSearching(false);
         setShowSearchResults(true);
@@ -54,7 +59,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, user, role]);
 
   const unreadCount = notifications.filter((n: CRMNotification) => !n.read).length;
 
@@ -65,133 +70,190 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-border bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-      {/* Mobile menu button */}
-      <button
-        type="button"
-        className="-m-2.5 p-2.5 text-brown lg:hidden"
-        onClick={onMenuClick}
-      >
-        <span className="sr-only">Open sidebar</span>
-        <Menu className="h-6 w-6" aria-hidden="true" />
-      </button>
+    <header className={cn(
+      "sticky top-0 z-[70] flex shrink-0 items-center justify-between transition-all duration-500",
+      isAdmin 
+        ? "h-20 bg-v-primary/95 lg:bg-chef-prep/30 lg:backdrop-blur-xl border-b border-chef-charcoal/5 shadow-soft-low lg:shadow-none" 
+        : "h-20 border-b border-chef-charcoal/5 bg-white/60 backdrop-blur-xl",
+      "px-6 lg:px-12"
+    )}>
+      <div className="flex flex-1 items-center gap-x-4 self-stretch lg:gap-x-6">
+        {/* Mobile Branded Header for Admin */}
+        {isAdmin && (
+          <div className="flex lg:hidden items-center gap-4">
+             <button 
+                className="p-3 -ml-2 text-white active:scale-95 duration-200 hover:bg-white/10 rounded-full transition-all"
+                aria-label="Open sidebar menu"
+             >
+                <Menu className="h-6 w-6" />
+             </button>
+             <h1 className="text-xl font-black text-white tracking-tight">Budda&apos;s</h1>
+          </div>
+        )}
 
-      {/* Separator for mobile */}
-      <div className="h-6 w-px bg-gray-border lg:hidden" aria-hidden="true" />
+        {/* Search Mobile Toggle - Hidden for Admin on mobile */}
+        {!isAdmin && (
+          <button 
+            onClick={() => setIsMobileSearchOpen(true)}
+            aria-label="Search database"
+            className="lg:hidden p-3 -ml-2 text-chef-muted hover:text-chef-charcoal transition-all focus:outline-none"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+        )}
 
-      <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-        <div className="relative flex flex-1">
-          <label htmlFor="search-field" className="sr-only">
-            Search
-          </label>
-          <Search
-            className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-brown/40"
-            aria-hidden="true"
-          />
-          <input
-            id="search-field"
-            className="block h-full w-full border-0 py-0 pl-8 pr-0 text-brown placeholder:text-brown/40 focus:ring-0 sm:text-sm bg-transparent"
-            placeholder="Search leads, companies, or events..."
-            type="search"
-            name="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
-          />
+        <div className={cn(
+          "relative flex-1 items-center transition-all duration-300",
+          !isMobileSearchOpen && "hidden lg:flex",
+          isMobileSearchOpen && "fixed inset-0 z-[80] bg-chef-prep/95 backdrop-blur-3xl lg:bg-transparent lg:inset-auto lg:relative flex p-4 lg:p-0 animate-in fade-in zoom-in duration-300"
+        )}>
+          <div className="relative w-full lg:max-w-2xl">
+            <Search
+              className={cn(
+                "pointer-events-none absolute inset-y-0 left-6 h-full w-4",
+                isAdmin ? "text-white/40 lg:text-chef-muted" : "text-chef-muted"
+              )}
+              aria-hidden="true"
+            />
+            <input
+              id="search-field"
+              className={cn(
+                "block h-14 my-auto w-full border border-transparent py-0 pl-14 pr-12 transition-all rounded-[28px] font-medium text-sm focus:border-accent-fresh/30 focus:ring-0",
+                isAdmin 
+                  ? "bg-white/10 placeholder:text-white/40 text-white lg:bg-white lg:text-chef-charcoal lg:placeholder:text-chef-muted lg:shadow-soft-low" 
+                  : "bg-white placeholder:text-chef-muted text-chef-charcoal shadow-soft-low"
+              )}
+              placeholder="Search records, contacts, or deals..."
+              type="search"
+              name="search"
+              autoFocus={isMobileSearchOpen}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => searchQuery.length >= 2 && setShowSearchResults(true)}
+            />
+            
+            {/* Close Button Mobile */}
+            {isMobileSearchOpen && (
+              <button 
+                onClick={() => setIsMobileSearchOpen(false)}
+                className="lg:hidden absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-chef-charcoal/5 rounded-full"
+              >
+                <X className="h-5 w-5 text-chef-muted" />
+              </button>
+            )}
 
-          {showSearchResults && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowSearchResults(false)} />
-              <div className="absolute top-16 left-0 z-20 w-full max-w-md origin-top-left rounded-xl bg-white shadow-lg ring-1 ring-gray-border focus:outline-none overflow-hidden">
-                <div className="p-2 border-b border-gray-border/50 bg-gray-bg/30">
-                  <p className="text-[10px] font-bold text-brown/40 uppercase tracking-widest px-2">Search Results</p>
+            {showSearchResults && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowSearchResults(false)} />
+                <div className={cn(
+                  "absolute z-20 w-full lg:max-w-xl origin-top-left rounded-[32px] bg-white shadow-soft-high border border-chef-charcoal/5 focus:outline-none overflow-hidden animate-in fade-in zoom-in-95 duration-200",
+                  "top-16 lg:top-18"
+                )}>
+                  <div className="p-5 border-b border-chef-charcoal/5 bg-chef-prep/30">
+                    <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.3em] px-2">Quantum Search Results</p>
+                  </div>
+                  <div className="max-h-[480px] overflow-y-auto divide-y divide-chef-charcoal/[0.03] custom-scrollbar">
+                    {isSearching ? (
+                      <div className="p-12 text-center text-sm text-chef-muted italic flex flex-col items-center gap-3">
+                         <div className="h-2 w-12 bg-accent-fresh/20 rounded-full animate-shimmer" />
+                         Scanning Data Matrix...
+                      </div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map((result: { id: string, type: 'LEAD' | 'COMPANY', title: string, subtitle: string, link: string }) => (
+                        <a
+                          key={`${result.type}-${result.id}`}
+                          href={result.link}
+                          className="flex items-center gap-5 p-5 hover:bg-chef-prep/50 transition-all group active:scale-[0.99]"
+                          onClick={() => {
+                            setShowSearchResults(false);
+                            setIsMobileSearchOpen(false);
+                          }}
+                        >
+                          <div className={`h-12 w-12 rounded-[18px] flex items-center justify-center shrink-0 shadow-soft-low border border-chef-charcoal/5 transition-transform group-hover:scale-110 ${result.type === 'LEAD' ? 'bg-accent-heat/10 text-accent-heat' : 'bg-accent-fresh/10 text-accent-fresh'}`}>
+                            {result.type === 'LEAD' ? <UserIcon size={20} /> : <Building2 size={20} />}
+                          </div>
+                          <div className="flex flex-col">
+                            <p className="text-[15px] font-black text-chef-charcoal leading-tight tracking-tight">{result.title}</p>
+                            <p className="text-[10px] font-black text-chef-muted uppercase tracking-[0.2em] mt-1">{result.subtitle}</p>
+                          </div>
+                        </a>
+                      ))
+                    ) : (
+                      <div className="p-12 text-center text-sm text-chef-muted italic">No results found for &ldquo;{searchQuery}&rdquo;</div>
+                    )}
+                  </div>
                 </div>
-                <div className="max-h-96 overflow-y-auto divide-y divide-gray-border/50">
-                  {isSearching ? (
-                    <div className="p-4 text-center text-sm text-brown/40 italic">Searching...</div>
-                  ) : searchResults.length > 0 ? (
-                    searchResults.map((result: { id: string, type: 'LEAD' | 'COMPANY', title: string, subtitle: string, link: string }) => (
-                      <a
-                        key={`${result.type}-${result.id}`}
-                        href={result.link}
-                        className="flex items-center gap-3 p-3 hover:bg-teal-base/5 transition-colors group"
-                        onClick={() => setShowSearchResults(false)}
-                      >
-                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${result.type === 'LEAD' ? 'bg-orange/10 text-orange' : 'bg-teal-base/10 text-teal-base'}`}>
-                          {result.type === 'LEAD' ? <UserIcon size={16} /> : <Building2 size={16} />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-brown group-hover:text-teal-dark">{result.title}</p>
-                          <p className="text-xs text-brown/60">{result.subtitle}</p>
-                        </div>
-                      </a>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-sm text-brown/40 italic">No results found for "{searchQuery}"</div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
         
-        <div className="flex items-center gap-x-4 lg:gap-x-6">
+        <div className="ml-auto flex items-center gap-x-2 lg:gap-x-4">
+          <div className="hidden lg:flex">
+            <ThemeToggle />
+          </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button 
                 type="button" 
-                className="-m-2.5 p-2.5 text-brown/60 hover:text-brown transition-colors relative outline-none focus-visible:ring-2 focus-visible:ring-teal-base rounded-full"
+                aria-label={`You have ${unreadCount} unread notifications`}
+                className={cn(
+                  "-m-2.5 p-3.5 transition-all relative outline-none focus-visible:ring-2 focus-visible:ring-accent-fresh rounded-2xl active:scale-90",
+                  isAdmin ? "text-white lg:text-chef-muted hover:bg-white/10 lg:hover:bg-chef-prep/50 lg:hover:text-chef-charcoal" : "text-chef-muted hover:bg-chef-prep/50 hover:text-chef-charcoal"
+                )}
               >
                 <span className="sr-only">View notifications</span>
                 <Bell className="h-5 w-5" aria-hidden="true" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-orange text-[10px] font-bold text-white ring-2 ring-white">
-                    {unreadCount}
-                  </span>
+                  <span className={cn(
+                    "absolute top-3.5 right-3.5 h-2 w-2 rounded-full",
+                    isAdmin ? "bg-accent-heat ring-2 ring-v-primary lg:ring-white" : "bg-accent-heat ring-2 ring-white"
+                  )} />
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-0 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-border/50 bg-gray-bg/30 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-brown uppercase tracking-wider">Notifications</h3>
+            <DropdownMenuContent align="end" className="w-[440px] p-0 overflow-hidden rounded-[32px] bg-white shadow-soft-high border border-chef-charcoal/5 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="px-8 py-6 border-b border-chef-charcoal/5 bg-chef-prep/30 flex items-center justify-between">
+                <h3 className="text-[11px] font-black text-chef-charcoal uppercase tracking-[0.25em]">Notifications Hub</h3>
                 {unreadCount > 0 && (
                   <button 
                     onClick={(e) => {
                       e.preventDefault();
                       markAllNotificationsAsRead(user!.uid);
                     }}
-                    className="text-[10px] font-bold text-teal-base hover:text-teal-dark uppercase tracking-widest"
+                    className="text-[10px] font-black text-accent-fresh hover:text-chef-charcoal uppercase tracking-[0.2em] transition-colors"
                   >
-                    Mark all as read
+                    Clear All
                   </button>
                 )}
               </div>
-              <div className="max-h-96 overflow-y-auto divide-y divide-gray-border/50">
+              <div className="max-h-[440px] overflow-y-auto divide-y divide-chef-charcoal/[0.03] custom-scrollbar">
                 {notifications.length > 0 ? notifications.map((n: CRMNotification) => (
                   <DropdownMenuItem 
                     key={n.id} 
                     asChild
                     className={cn(
-                      "p-4 flex gap-3 cursor-pointer items-start focus:bg-teal-base/5",
-                      !n.read && "bg-teal-base/5"
+                      "p-6 flex gap-4 cursor-pointer items-start focus:bg-chef-prep/50 transition-colors",
+                      !n.read && "bg-accent-fresh/[0.03]"
                     )}
                   >
                     <a href={n.link || "#"}>
                       <div className="shrink-0 mt-1">
-                        {n.type === 'SUCCESS' && <CheckCircle2 className="w-4 h-4 text-teal-base" />}
-                        {n.type === 'WARNING' && <AlertTriangle className="w-4 h-4 text-orange" />}
-                        {n.type === 'ERROR' && <XCircle className="w-4 h-4 text-red-500" />}
-                        {n.type === 'INFO' && <Info className="w-4 h-4 text-teal-dark" />}
+                        {n.type === 'SUCCESS' && <CheckCircle2 className="w-5 h-5 text-accent-fresh" />}
+                        {n.type === 'WARNING' && <AlertTriangle className="w-5 h-5 text-accent-heat" />}
+                        {n.type === 'ERROR' && <XCircle className="w-5 h-5 text-red-500" />}
+                        {n.type === 'INFO' && <Info className="w-5 h-5 text-chef-charcoal" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!n.read ? 'font-bold' : 'font-medium'} text-brown leading-snug`}>
+                        <p className={`text-[15px] ${!n.read ? 'font-black' : 'font-bold'} text-chef-charcoal leading-tight tracking-tight`}>
                           {n.title}
                         </p>
-                        <p className="text-xs text-brown/60 mt-1 line-clamp-2">
+                        <p className="text-sm text-chef-muted mt-1.5 leading-relaxed line-clamp-2 font-medium">
                           {n.message}
                         </p>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-[10px] text-brown/40 font-medium tracking-tight">
+                        <div className="flex items-center justify-between mt-4">
+                          <span className="text-[10px] text-chef-muted/60 font-bold uppercase tracking-wider">
                             {n.createdAt?.seconds ? formatDistanceToNow(n.createdAt.seconds * 1000, { addSuffix: true }) : 'just now'}
                           </span>
                           {!n.read && (
@@ -201,9 +263,9 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
                                 e.stopPropagation();
                                 markNotificationAsRead(n.id);
                               }}
-                              className="text-[10px] font-bold text-teal-base hover:underline uppercase tracking-widest"
+                              className="text-[10px] font-black text-accent-fresh hover:underline uppercase tracking-[0.2em]"
                             >
-                              Mark read
+                              Dismiss
                             </button>
                           )}
                         </div>
@@ -211,8 +273,11 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
                     </a>
                   </DropdownMenuItem>
                 )) : (
-                  <div className="p-8 text-center text-brown/40 text-sm italic">
-                    No notifications yet.
+                  <div className="p-16 text-center text-chef-muted text-sm italic flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 bg-chef-prep rounded-full flex items-center justify-center opacity-40">
+                      <Bell size={24} />
+                    </div>
+                    No active transmissions.
                   </div>
                 )}
               </div>
@@ -220,53 +285,72 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
           </DropdownMenu>
 
           {/* Separator */}
-          <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-border" aria-hidden="true" />
+          <div className="hidden lg:block lg:h-8 lg:w-px lg:bg-chef-charcoal/5" aria-hidden="true" />
+
+          <button 
+            type="button" 
+            className="hidden lg:flex -m-2.5 p-3.5 transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent-fresh rounded-2xl hover:bg-chef-prep/50 text-chef-muted hover:text-chef-charcoal active:scale-90"
+          >
+            <span className="sr-only">Help</span>
+            <HelpCircle className="h-5 w-5" aria-hidden="true" />
+          </button>
 
           {/* User profile dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button 
                 type="button"
-                className="flex items-center gap-x-2 lg:gap-x-4 outline-none group focus-visible:ring-2 focus-visible:ring-teal-base rounded-lg px-2 py-1 -mx-2"
+                aria-label="User account and profile settings"
+                className="flex items-center gap-x-4 outline-none group focus-visible:ring-2 focus-visible:ring-accent-fresh rounded-[20px] p-1.5 hover:bg-white/10 lg:hover:bg-chef-prep/50 transition-all ml-2 active:scale-95"
               >
-                <div className="h-8 w-8 rounded-full bg-teal-base/20 flex items-center justify-center text-teal-dark font-bold text-xs ring-2 ring-transparent group-hover:ring-teal-base/30 transition-all">
-                  {getInitials(user?.displayName, user?.email)}
-                </div>
-                <span className="hidden lg:flex lg:items-center">
-                  <span className="text-sm font-semibold leading-6 text-brown group-hover:text-teal-dark transition-colors" aria-hidden="true">
+                <div className="hidden lg:flex flex-col items-end mr-1">
+                  <span className="text-sm font-black text-chef-charcoal tracking-tight transition-colors line-clamp-1 max-w-[120px]" aria-hidden="true">
                     {user?.displayName || (user?.email?.split('@')[0]) || 'Member'}
                   </span>
-                  <ChevronDown className="ml-2 h-4 w-4 text-brown/40 group-hover:text-teal-dark font-bold" aria-hidden="true" />
-                </span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.3em] text-chef-muted leading-none mt-1.5 opacity-60">
+                    {role || 'MEMBER'}
+                  </span>
+                </div>
+                <div className={cn(
+                  "h-11 w-11 rounded-[16px] flex items-center justify-center font-bold text-xs shadow-soft-low border border-chef-charcoal/5 overflow-hidden transition-all group-hover:scale-105",
+                  isAdmin ? "bg-white/10 text-white lg:bg-chef-charcoal lg:text-white" : "bg-chef-charcoal text-white"
+                )}>
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    isAdmin ? <UserIcon size={20} className="text-white" /> : getInitials(user?.displayName, user?.email)
+                  )}
+                </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-72 p-0 overflow-hidden rounded-[32px] bg-white shadow-soft-high border border-chef-charcoal/5 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="p-6 bg-chef-prep/30 border-b border-chef-charcoal/5">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-bold leading-none text-teal-dark">{user?.displayName || 'Member'}</p>
-                  <p className="text-xs font-medium leading-none text-brown/50 truncate pr-2">
+                  <p className="text-base font-black leading-tight text-chef-charcoal tracking-tight">{user?.displayName || 'Member'}</p>
+                  <p className="text-[10px] font-bold leading-none text-chef-muted truncate uppercase tracking-widest mt-1 opacity-60">
                     {user?.email}
                   </p>
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <a href="/app/settings" className="flex items-center">
-                  <UserIcon className="mr-2 h-4 w-4 text-brown/40" />
-                  <span>Your Profile</span>
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-orange focus:bg-orange/5 focus:text-orange cursor-pointer"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  setShowLogoutConfirm(true);
-                }}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
-              </DropdownMenuItem>
+              </div>
+              <div className="p-2">
+                <DropdownMenuItem asChild className="rounded-[18px] p-4 focus:bg-chef-prep/50 cursor-pointer">
+                  <a href="/app/settings" className="flex items-center gap-3">
+                    <UserIcon size={18} className="text-chef-muted" />
+                    <span className="text-sm font-bold text-chef-charcoal">Account Settings</span>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-chef-charcoal/[0.03] my-1" />
+                <DropdownMenuItem 
+                  className="rounded-[18px] p-4 text-accent-heat focus:bg-accent-heat/5 focus:text-accent-heat cursor-pointer"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setShowLogoutConfirm(true);
+                  }}
+                >
+                  <LogOut size={18} className="mr-3" />
+                  <span className="text-sm font-bold">Sign out</span>
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

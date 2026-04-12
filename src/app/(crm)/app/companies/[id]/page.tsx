@@ -1,412 +1,278 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Building2,
-  ExternalLink,
-  Calendar,
-  Users,
-  Coffee,
+import { useEffect, useState, use } from "react";
+import { 
+  Loader2, 
   AlertCircle,
-  Loader2,
-  X,
-  UtensilsCrossed
+  Target
 } from "lucide-react";
-import { useState, use } from "react";
 import { Button } from "@/components/shared/Button";
-import { Badge } from "@/components/shared/Badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
-import { Input } from "@/components/shared/Input";
 import Link from "next/link";
 import { 
   getCompanyById, 
-  getRequestsByCompanyId,
-  getActiveCommitmentByCompanyId,
-  updateCompany 
-} from "@/lib/firebase/services/crm";
-import { getContactsByCompany } from "@/lib/firebase/services/contact.service";
+  updateCompany, 
+  archiveCompany,
+  getContactsByCompanyId,
+  getRequestsByCompanyId
+} from "@/lib/firebase/services/company.service";
+import { getCommitmentsByCompanyId } from "@/lib/firebase/services/commitment.service";
+import { getActivitiesByEntity } from "@/lib/firebase/services/base";
 import { useAuth } from "@/lib/firebase/context/auth";
-import { format } from "date-fns";
-import { NewCommitmentModal } from "@/components/crm/NewCommitmentModal";
-import { ActivityLog } from "@/components/crm/ActivityLog";
-import { QuickLogDrawer } from "@/components/crm/QuickLogDrawer";
+import { Company, Commitment, Activity, Contact, CateringRequest } from "@/types/crm";
+import toast from "react-hot-toast";
+
+// Modular Detail Components
+import { CompanyHeader } from "@/components/crm/details/CompanyHeader";
+import { CompanyKPIs } from "@/components/crm/details/CompanyKPIs";
+import { InteractionHistory } from "@/components/crm/details/InteractionHistory";
+import { StageFunnel } from "@/components/crm/details/StageFunnel";
+
+// Core Panels
 import { AccountHealthPanel } from "@/components/crm/AccountHealthPanel";
 import { CommitmentProgress } from "@/components/crm/CommitmentProgress";
+import { ActivityLog } from "@/components/crm/ActivityLog";
 import { ContactManager } from "@/components/crm/ContactManager";
-import { Company, Contact, CateringRequest, Commitment } from "@/types/crm";
-import toast from "react-hot-toast";
+import { QuickLogDrawer } from "@/components/crm/QuickLogDrawer";
+import { NewCommitmentModal } from "@/components/crm/NewCommitmentModal";
 
 export default function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const queryClient = useQueryClient();
-  const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [requests, setRequests] = useState<CateringRequest[]>([]);
+  
+  // UI States
   const [isLogOpen, setIsLogOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [isCommitmentModalOpen, setIsCommitmentModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", website: "", address: "", industry: "" });
   const [saving, setSaving] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", companyType: "", website: "", address: "", phone: "", email: "" });
-  
-  const { user, role } = useAuth();
-  
-  const { data, isLoading, error, refetch } = useQuery<{ company: Company, contacts: Contact[], requests: CateringRequest[], commitment: Commitment | null }>({
-    queryKey: ['company-detail', id, user?.uid],
-    queryFn: async () => {
-      const [company, contacts, requests, commitment] = await Promise.all([
+
+  const fetchData = async () => {
+    if (!id) return;
+    try {
+      const [companyData, commitmentData, activityData, contactData, requestData] = await Promise.all([
         getCompanyById(id),
-        getContactsByCompany(id),
-        getRequestsByCompanyId(id, user?.uid, role || undefined),
-        getActiveCommitmentByCompanyId(id)
+        getCommitmentsByCompanyId(id),
+        getActivitiesByEntity("COMPANY", id),
+        getContactsByCompanyId(id),
+        getRequestsByCompanyId(id)
       ]);
 
-      if (!company) throw new Error("Company not found");
+      if (!companyData) {
+        setError("Corporate entity not identified in registry.");
+        return;
+      }
 
-      return { company, contacts, requests, commitment };
-    },
-    enabled: !!user && !!role
-  });
+      setCompany(companyData as Company);
+      setCommitments(commitmentData as Commitment[]);
+      setActivities(activityData as Activity[]);
+      setContacts(contactData as Contact[]);
+      setRequests(requestData as CateringRequest[]);
+      
+      setEditForm({
+        name: companyData.name || "",
+        website: companyData.website || "",
+        address: companyData.address || "",
+        industry: companyData.companyType || "Corporate Client"
+      });
+    } catch (err) {
+      console.error("Error loading company details:", err);
+      setError("Synchronisation protocol failed. Please re-authenticate.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (isLoading) {
+  useEffect(() => {
+    fetchData();
+  }, [id]);
+
+  const handleSave = async () => {
+    if (!company || !user) return;
+    setSaving(true);
+    try {
+      await updateCompany(id, {
+        name: editForm.name,
+        website: editForm.website,
+        address: editForm.address,
+        companyType: editForm.industry
+      }, user.uid, user.displayName || "Admin");
+      
+      setCompany(prev => prev ? { ...prev, ...editForm, companyType: editForm.industry } : null);
+      setIsEditing(false);
+      toast.success("Protocol updated");
+    } catch {
+      toast.error("Correction failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!company || !user || !window.confirm("Archive this corporate entity and all associated protocols?")) return;
+    try {
+      await archiveCompany(id, user.uid, user.displayName || "Admin");
+      toast.success("Entity archived");
+    } catch (err) {
+      toast.error("Archival failed");
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-brown/50">
-        <Loader2 className="w-10 h-10 animate-spin mb-4" />
-        <p className="font-medium">Loading company profile...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-teal-dark/50 p-10 font-heading">
+        <Loader2 className="w-12 h-12 animate-spin mb-6 text-teal-base" />
+        <p className="font-black uppercase tracking-[0.3em] text-sm animate-pulse">Syncing Corporate Intelligence...</p>
       </div>
     );
   }
 
-  if (error || !data?.company) {
+  if (error || !company) {
     return (
-      <div className="p-8 max-w-2xl mx-auto text-center">
-        <div className="bg-orange/10 p-6 rounded-2xl border border-orange/20">
-          <AlertCircle className="w-12 h-12 text-orange mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-teal-dark mb-2">Error</h2>
-          <p className="text-brown/70 mb-6">{(error as Error)?.message || "Could not find this company."}</p>
-          <Button asChild variant="outline">
-            <Link href="/app/leads">Return to Leads</Link>
+      <div className="p-8 max-w-2xl mx-auto text-center mt-20">
+        <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-3xl p-12 rounded-[2rem] border border-teal-dark/10 shadow-glass">
+          <div className="w-20 h-20 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-orange/20">
+            <AlertCircle className="w-10 h-10 text-orange" />
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-tight text-teal-dark dark:text-brown mb-4">Registry Error</h2>
+          <p className="text-teal-dark/60 dark:text-brown/60 mb-10 max-w-sm mx-auto leading-relaxed font-body">
+            {error || "The requested entity could not be verified in the current lifecycle."}
+          </p>
+          <Button asChild className="bg-teal-dark text-white rounded-xl px-10 h-14 font-black uppercase tracking-widest text-[11px] shadow-glass shadow-teal-dark/20 hover:scale-105 transition-all">
+            <Link href="/app/companies">Back to Directory</Link>
           </Button>
         </div>
       </div>
     );
   }
 
-  const { company, contacts, requests, commitment } = data;
-  const daysToRenewal = commitment?.renewalDate?.seconds
-    ? Math.ceil((commitment.renewalDate.seconds * 1000 - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
-
-  const renewalBanner = commitment?.status === "Lapsed"
-    ? { tone: "orange", text: "Commitment lapsed - re-engagement needed." }
-    : company.firstOrderPlaced === false && commitment && company.createdAt?.seconds && Date.now() - company.createdAt.seconds * 1000 > 7 * 24 * 60 * 60 * 1000
-      ? { tone: "orange", text: "No first order yet - activation priority." }
-      : daysToRenewal !== null && daysToRenewal <= 30
-        ? { tone: "gold", text: `Renews in ${daysToRenewal} days - start the renewal conversation.` }
-        : daysToRenewal !== null && daysToRenewal <= 60
-          ? { tone: "teal", text: `Renewal coming up in ${daysToRenewal} days.` }
-          : null;
-
-  const openEdit = () => {
-    setEditForm({
-      name: company.name ?? "",
-      companyType: (company as any).companyType ?? "",
-      website: company.website ?? "",
-      address: company.address ?? "",
-      phone: (company as any).phone ?? "",
-      email: (company as any).email ?? "",
-    });
-    setEditing(true);
-  };
-
-  const handleSave = async () => {
-    if (!user) return;
-    setSaving(true);
-    try {
-      await updateCompany(id, editForm, user.uid, user.displayName || "Admin");
-      await queryClient.invalidateQueries({ queryKey: ["company-detail", id] });
-      setEditing(false);
-      toast.success("Company updated");
-    } catch {
-      toast.error("Failed to save changes");
-    } finally {
-      setSaving(false);
-    }
-  };
+  // Calculate Metrics
+  const totalRevenue = requests.reduce((sum, r) => sum + (r.quoteAmount || 0), 0);
+  const orderVolume = requests.filter(r => r.fulfillmentStatus === 'Fulfilled' || r.fulfillmentStatus === 'Paid').length;
+  const healthScore = Math.min(100, Math.max(0, (orderVolume * 10) + (commitments.length * 20)));
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold font-heading text-teal-dark">{company.name}</h1>
-            <Badge variant="success">{commitment ? 'Active Account' : 'Lead'}</Badge>
-            {company.firstOrderPlaced === false && commitment && (
-              <Badge variant="warning" className="animate-pulse">Awaiting First Booking</Badge>
-            )}
+    <div className="relative min-h-screen pb-20">
+      <main className="p-6 lg:p-10 max-w-[1700px] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-1000">
+        
+        {/* Header Protocol */}
+        <div className="mb-10">
+          <CompanyHeader 
+            name={company.name}
+            status={company.status || "Active"}
+            industry={company.companyType}
+            address={company.address}
+            website={company.website}
+            phone={company.phone}
+            backUrl="/app/companies"
+            isEditing={isEditing}
+            onEdit={() => setIsEditing(true)}
+            onCancel={() => setIsEditing(false)}
+            onSave={handleSave}
+            onDelete={handleDelete}
+            onAddCommitment={() => setIsCommitmentModalOpen(true)}
+            isSubmitting={saving}
+          />
+        </div>
+
+        {/* Intelligence Overview */}
+        <div className="flex flex-col xl:flex-row items-center justify-between gap-8 mb-10">
+          <div className="hidden xl:block">
+            <h2 className="text-xl font-heading font-black uppercase tracking-[0.3em] text-teal-dark dark:text-teal-base opacity-30">Intelligence Overview</h2>
           </div>
-          <div className="flex items-center gap-4 mt-2 text-sm text-brown/70">
-            <span className="flex items-center gap-1"><Building2 className="w-4 h-4 text-brown/40" /> {company.companyType || "Company"}</span>
-            {company.website && (
-              <a 
-                href={company.website.startsWith('http') ? company.website : `https://${company.website}`} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="flex items-center gap-1 text-teal-base hover:text-teal-dark transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" /> {company.website.replace(/^https?:\/\//, '')}
-              </a>
-            )}
+
+          <CompanyKPIs 
+            totalRevenue={totalRevenue}
+            orderVolume={orderVolume}
+            healthScore={healthScore}
+            commitmentLevel={commitments[0]?.tier?.toString() || "Standard"}
+          />
+        </div>
+
+        {/* 12-Column Intelligence Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Main Protocol Column */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Visual Intelligence Bento */}
+            <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 shadow-glass border border-teal-dark/5">
+              <InteractionHistory requests={requests} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Opportunities Pipeline */}
+              <div className="bg-white/40 dark:bg-zinc-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 shadow-glass border border-teal-dark/5">
+                <StageFunnel requests={requests} />
+              </div>
+
+              {/* Account Health Diagnostic */}
+              <AccountHealthPanel 
+                company={company} 
+                commitment={commitments[0] || null} 
+                lastActivityDate={activities[0]?.createdAt ? (activities[0].createdAt as any).toDate() : undefined}
+              />
+            </div>
+
+            {/* Engagement Trace Log */}
+            <ActivityLog 
+              entityId={id} 
+              entityType="COMPANY" 
+              entityName={company.name} 
+              onSuccess={fetchData} 
+            />
           </div>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={openEdit}>Edit Account</Button>
-          <Button onClick={() => setIsLogOpen(true)}>Log Activity</Button>
-        </div>
-      </div>
 
-      {/* Health Diagnostic Panel */}
-      <AccountHealthPanel 
-        company={company} 
-        commitment={commitment} 
-        lastActivityDate={requests[0]?.createdAt && 'toDate' in requests[0].createdAt ? (requests[0].createdAt as any).toDate() : undefined} 
-      />
-
-      {renewalBanner && (
-        <div className={`rounded-2xl border px-5 py-4 text-sm font-medium ${
-          renewalBanner.tone === "orange"
-            ? "border-orange/20 bg-orange/10 text-orange"
-            : renewalBanner.tone === "gold"
-              ? "border-[#E9C559]/30 bg-[#E9C559]/12 text-brown"
-              : "border-teal-base/20 bg-teal-base/10 text-teal-dark"
-        }`}>
-          {renewalBanner.text}
-        </div>
-      )}
-
-      {/* Edit Panel */}
-      {editing && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg">Edit Company</CardTitle>
-            <button onClick={() => setEditing(false)} className="text-brown/40 hover:text-brown transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-brown/60">Company Name</label>
-              <Input value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-brown/60">Company Type</label>
-              <Input value={editForm.companyType} onChange={(e) => setEditForm(f => ({ ...f, companyType: e.target.value }))} placeholder="e.g. Corporate, Non-Profit" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-brown/60">Email</label>
-              <Input type="email" value={editForm.email} onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-brown/60">Phone</label>
-              <Input value={editForm.phone} onChange={(e) => setEditForm(f => ({ ...f, phone: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-brown/60">Website</label>
-              <Input value={editForm.website} onChange={(e) => setEditForm(f => ({ ...f, website: e.target.value }))} placeholder="https://..." />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-brown/60">Address</label>
-              <Input value={editForm.address} onChange={(e) => setEditForm(f => ({ ...f, address: e.target.value }))} />
-            </div>
-            <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>Cancel</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Save Changes
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Details */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg">Account Profile</CardTitle>
-              {!company.activeCommitmentId && !commitment && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 px-2 text-teal-base"
-                  onClick={() => setIsMembershipModalOpen(true)}
-                >
-                  Create Commitment
+          {/* Strategic Sidebar */}
+          <div className="lg:col-span-4 space-y-8">
+            {/* Membership Protocol */}
+            {commitments[0] && <CommitmentProgress commitment={commitments[0]} />}
+            
+            {/* Stakeholder Registry */}
+            <ContactManager companyId={id} contacts={contacts} onUpdate={fetchData} />
+            
+            {/* Quick Actions / Status Card */}
+            <div className="bg-teal-dark dark:bg-zinc-900 p-8 rounded-[2rem] shadow-glass shadow-teal-dark/20 dark:shadow-teal-base/5 text-white border border-white/5 dark:border-teal-base/10 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Target className="w-24 h-24" />
+              </div>
+              <div className="relative z-10 space-y-6">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 font-heading">Protocol Status</p>
+                  <h3 className="text-2xl font-black uppercase tracking-tight">Deployment Ready</h3>
+                </div>
+                <p className="text-xs font-medium text-white/60 leading-relaxed font-body">
+                  All systems synchronized with regional catering standards. Stakeholder engagement is currently at peak capacity.
+                </p>
+                <Button className="w-full bg-teal-base hover:bg-teal-base/90 text-teal-dark rounded-xl font-black uppercase tracking-widest text-[10px] h-12 shadow-lg shadow-teal-base/20">
+                  Generate Summary
                 </Button>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div>
-                <span className="block text-brown/50 mb-1">Catering Manager</span>
-                <span className="font-medium text-brown">{company.assignedRepId === 'admin_id' ? 'Admin User' : 'Service Team'}</span>
               </div>
-              <div className="flex items-center justify-between">
-                  <div>
-                  <span className="block text-brown/50 mb-1">Commitment Status</span>
-                  <div className="flex flex-col gap-1">
-                    {commitment ? (
-                      <>
-                        <Badge 
-                          variant={
-                            commitment.status === 'Lapsed' ? 'danger' :
-                            commitment.status === 'Expiring' ? 'warning' : 'success'
-                          }
-                        >
-                          {commitment.status === 'Expiring' ? 'Expiring Soon' : 
-                           commitment.status === 'Lapsed' ? 'Lapsed' : 'Active Account'}
-                        </Badge>
-                        <span className="text-[10px] text-brown/60 font-medium">
-                          {commitment.ordersUsed} / {commitment.ordersCommitted} Orders Used
-                        </span>
-                      </>
-                    ) : (
-                      <Badge variant="neutral">No Active Commitment</Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <span className="block text-brown/50 mb-1">Account Created</span>
-                <span className="font-medium text-brown">
-                  {company.createdAt?.seconds ? format(company.createdAt.seconds * 1000, 'MMM d, yyyy') : 'N/A'}
-                </span>
-              </div>
-              <div>
-                <span className="block text-brown/50 mb-1">Lifetime Events</span>
-                <span className="font-medium text-brown">{requests.length} events completed</span>
-              </div>
-              {company.address && (
-                <div>
-                  <span className="block text-brown/50 mb-1">Headquarters</span>
-                  <span className="flex items-start gap-2 text-brown">
-                    <Building2 className="w-4 h-4 text-brown/40 mt-0.5" />
-                    {company.address}
-                  </span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <NewCommitmentModal 
-            isOpen={isMembershipModalOpen} 
-            onClose={() => setIsMembershipModalOpen(false)} 
-            onSuccess={() => refetch()} 
-            initialCompanyId={company.id}
-          />
-
-          <ContactManager 
-            companyId={id} 
-            contacts={contacts} 
-            onUpdate={() => refetch()} 
-          />
-        </div>
-
-        {/* Right Column - Activity & Requests */}
-        <div className="lg:col-span-2 space-y-6">
-          {commitment && (
-            <CommitmentProgress commitment={commitment} />
-          )}
-
-          {!commitment && (
-            <div className="rounded-2xl border border-teal-base/15 bg-teal-base/5 p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-teal-dark">No active commitment yet. Ready to sign them up?</p>
-                <p className="text-xs text-brown/60 mt-1">Start the commitment flow directly from this account.</p>
-              </div>
-              <Button onClick={() => setIsMembershipModalOpen(true)}>Start Commitment</Button>
             </div>
-          )}
-
-          <ActivityLog 
-            entityId={company.id} 
-            entityType="COMPANY" 
-            entityName={company.name} 
-            onSuccess={() => refetch()} 
-          />
-
-          <div className="flex justify-start">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/app/menus">
-                <UtensilsCrossed className="mr-2 h-4 w-4" />
-                View Menu Options
-              </Link>
-            </Button>
           </div>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg text-teal-dark">Event History</CardTitle>
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/app/requests/new?companyId=${company.id}`}>Schedule New Event</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {requests.length > 0 ? (
-                <div className="border border-gray-border rounded-xl overflow-hidden shadow-sm">
-                  <table className="w-full text-left text-sm border-collapse">
-                    <thead className="bg-gray-bg border-b border-gray-border text-brown/70">
-                      <tr>
-                        <th className="px-5 py-4 font-bold uppercase tracking-wider text-[10px]">Event Date</th>
-                        <th className="px-5 py-4 font-bold uppercase tracking-wider text-[10px]">Type</th>
-                        <th className="px-5 py-4 font-bold uppercase tracking-wider text-[10px]">Headcount</th>
-                        <th className="px-5 py-4 font-bold uppercase tracking-wider text-[10px]">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-border">
-                      {requests.map(req => (
-                        <tr key={req.id} className="hover:bg-teal-base/5 transition-colors">
-                          <td className="px-5 py-4 font-bold text-teal-dark">
-                            <Link href={`/app/requests/${req.id}`} className="hover:underline">
-                              {req.preferredDate ? format(new Date(req.preferredDate), 'MMM d, yyyy') : 'TBD'}
-                            </Link>
-                          </td>
-                          <td className="px-5 py-4 flex items-center gap-2 text-brown font-medium">
-                            <Coffee className="w-4 h-4 text-brown/30" /> {req.cateringNeed}
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-2 text-brown font-medium">
-                              <Users className="w-4 h-4 text-brown/30" /> {req.estimatedGroupSize}
-                            </div>
-                          </td>
-                          <td className="px-5 py-4">
-                            <Badge variant={req.fulfillmentStatus === 'Fulfilled' ? 'neutral' : 'success'}>
-                              {req.fulfillmentStatus || 'Pending'}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-gray-bg/30 rounded-xl border border-dashed border-gray-border">
-                  <Calendar className="w-12 h-12 text-brown/20 mx-auto mb-4" />
-                  <p className="text-brown/60 font-medium italic mb-4">No event history recorded yet.</p>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/app/requests/new?companyId=${company.id}`}>Schedule New Event</Link>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
-      </div>
+      </main>
 
-      <QuickLogDrawer
-        isOpen={isLogOpen}
-        onClose={() => setIsLogOpen(false)}
+      {/* Interactions Layers */}
+      <QuickLogDrawer 
+        isOpen={isLogOpen} 
+        onClose={() => setIsLogOpen(false)} 
         entityId={company.id}
         entityType="COMPANY"
-        entityName={company.name}
-        onSuccess={() => refetch()}
+        onSuccess={fetchData}
+      />
+
+      <NewCommitmentModal
+        isOpen={isCommitmentModalOpen}
+        onClose={() => setIsCommitmentModalOpen(false)}
+        initialCompanyId={id}
+        onSuccess={fetchData}
       />
     </div>
   );

@@ -324,136 +324,128 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-8 overscroll-y-contain p-6 lg:p-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between group">
         <div>
-          <h1 className="text-3xl font-bold font-heading text-teal-dark">My Tasks</h1>
-          <p className="mt-1 text-sm text-brown/70">Your daily outreach queue, grouped by urgency and rep workflow.</p>
+          <h1 className="text-4xl font-bold font-heading text-teal-dark tracking-tight">Daily Queue</h1>
+          <p className="mt-1 text-sm text-brown/70 font-medium italic">High-velocity outreach and maintenance tasks.</p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2 self-start">
+        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2 self-start shadow-lg shadow-teal-base/20 group-hover:scale-105 transition-transform">
           <Plus className="h-4 w-4" />
-          New Task
+          Create Task
         </Button>
       </div>
 
-      <Card className="border-gray-border/70 shadow-sm">
-        <CardContent className="space-y-6 p-5">
-          <div className="flex flex-wrap gap-2">
-            {FILTER_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "min-h-[44px] rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-                  activeTab === tab.id
-                    ? "border-teal-base bg-teal-base/10 text-teal-dark"
-                    : "border-gray-border bg-white text-brown/60 hover:border-teal-base/30 hover:text-brown"
-                )}
-                style={{ touchAction: "manipulation" }}
-              >
-                {tab.label} <span className="ml-1 text-brown/40">{counts[tab.id]}</span>
-              </button>
-            ))}
+      <div className="flex-1">
+        {isLoading ? (
+          <div className="rounded-[24px] border border-dashed border-white/40 bg-white/10 px-6 py-24 text-center">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-teal-base border-t-transparent shadow-lg shadow-teal-base/20"></div>
+              <span className="font-black uppercase tracking-[0.2em] text-[10px] text-teal-dark/60">Sorting your day...</span>
+            </div>
           </div>
-
-          {isLoading ? (
-            <div className="rounded-3xl border border-dashed border-gray-border bg-gray-bg/40 px-6 py-14 text-center text-brown/50">
-              Loading your tasks...
+        ) : groupedTasks.length === 0 ? (
+          <div className="rounded-[24px] border border-dashed border-white/40 bg-white/10 px-6 py-24 text-center group">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/40 transition-colors">
+                <CheckCircle2 className="h-8 w-8 text-teal-base" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-teal-dark">Board Cleared</p>
+                <p className="mt-1 text-sm text-brown/50 font-medium">All caught up! You're ready for the next round of outreach.</p>
+              </div>
             </div>
-          ) : groupedTasks.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-gray-border bg-gray-bg/40 px-6 py-14 text-center">
-              <p className="text-lg font-semibold text-brown">No tasks in this view</p>
-              <p className="mt-2 text-sm text-brown/55">Clear board. You can add a follow-up or switch filters to check another bucket.</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {groupedTasks.map((group) => (
-                <section key={group.label} className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-brown/40">{group.label}</h2>
-                    <span className="text-xs font-medium text-brown/40">{group.tasks.length} tasks</span>
-                  </div>
-                  <div className="space-y-3">
-                    {group.tasks.map((task) => {
-                      const entityHref =
-                        task.entityType === "COMPANY"
-                          ? `/app/companies/${task.entityId}`
-                          : `/app/leads/${task.entityId}`;
-                      const isOverdue = getTaskBucketLabel(task) === "Overdue";
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {groupedTasks.map((group) => (
+              <section key={group.label} className="space-y-4">
+                <div className="flex items-center gap-4 px-2">
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-brown/30 whitespace-nowrap">{group.label}</h2>
+                  <div className="h-px bg-white/10 flex-1" />
+                  <span className="text-[10px] font-black tabular-nums text-brown/20">{group.tasks.length} ENTRIES</span>
+                </div>
+                <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+                  {group.tasks.map((task) => {
+                    const entityHref =
+                      task.entityType === "COMPANY"
+                        ? `/app/companies/${task.entityId}`
+                        : `/app/leads/${task.entityId}`;
+                    const isOverdue = getTaskBucketLabel(task) === "Overdue";
 
-                      return (
-                        <div
-                          key={task.id}
-                          className={cn(
-                            "rounded-3xl border bg-white p-4 shadow-sm transition-colors",
-                            isOverdue ? "border-orange/20" : "border-gray-border/70"
-                          )}
-                        >
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-start gap-3">
-                                <div className={cn(
-                                  "mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
-                                  task.entityType === "COMPANY" ? "bg-teal-base/10 text-teal-dark" : "bg-gold/15 text-gold"
-                                )}>
-                                  {task.entityType === "COMPANY" ? <Building2 className="h-5 w-5" /> : <Users className="h-5 w-5" />}
-                                </div>
-                                <div className="min-w-0 space-y-2">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <p className="text-base font-semibold text-brown">{task.subject}</p>
-                                    <Badge className={cn("border", PRIORITY_STYLES[task.priority])}>{task.priority}</Badge>
-                                  </div>
-                                  <Link href={entityHref} className="inline-flex items-center gap-1 text-sm font-medium text-teal-dark hover:underline">
-                                    {task.entityName}
-                                    <ChevronRight className="h-4 w-4" />
-                                  </Link>
-                                  <div className="flex flex-wrap items-center gap-3 text-sm text-brown/55">
-                                    <span className="inline-flex items-center gap-1">
-                                      <CalendarClock className="h-4 w-4" />
-                                      {formatDueDate(task)}
-                                    </span>
-                                    <span className={cn("inline-flex items-center gap-1", isOverdue ? "text-orange" : "")}>
-                                      <Clock3 className="h-4 w-4" />
-                                      {formatDistanceToNowStrict(task.dueDate.toDate(), { addSuffix: true })}
-                                    </span>
-                                  </div>
-                                </div>
+                    return (
+                      <Card
+                        key={task.id}
+                        variant="glass"
+                        className={cn(
+                          "border-white/20 p-5 group hover:bg-white/40 transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-teal-dark/5",
+                          isOverdue && "border-orange/30 bg-orange/5"
+                        )}
+                      >
+                        <div className="flex flex-col gap-5">
+                          <div className="flex items-start gap-4">
+                            <div className={cn(
+                              "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-inner",
+                              task.entityType === "COMPANY" ? "bg-teal-base/10 text-teal-dark" : "bg-orange/10 text-orange"
+                            )}>
+                              {task.entityType === "COMPANY" ? <Building2 className="h-6 w-6" /> : <Users className="h-6 w-6" />}
+                            </div>
+                            <div className="min-w-0 flex-1 space-y-1.5">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-lg font-bold text-teal-dark tracking-tight leading-none group-hover:text-teal-base transition-colors">{task.subject}</p>
+                                <Badge className={cn("border-none text-[9px] px-2 py-0.5 font-black uppercase tracking-[0.05em]", PRIORITY_STYLES[task.priority])}>{task.priority}</Badge>
                               </div>
+                              <Link href={entityHref} className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-teal-dark/40 hover:text-orange transition-colors">
+                                {task.entityName}
+                                <ChevronRight className="h-3 w-3" />
+                              </Link>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between border-t border-white/10 pt-4">
+                            <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold text-brown/40">
+                              <span className="inline-flex items-center gap-1.5">
+                                <CalendarClock className="h-3.5 w-3.5 opacity-40" />
+                                {formatDueDate(task)}
+                              </span>
+                              <span className={cn("inline-flex items-center gap-1.5", isOverdue ? "text-orange" : "")}>
+                                <Clock3 className="h-3.5 w-3.5 opacity-40" />
+                                {formatDistanceToNowStrict(task.dueDate.toDate(), { addSuffix: true }).toUpperCase()}
+                              </span>
                             </div>
 
-                            <div className="flex flex-wrap gap-2 lg:justify-end">
+                            <div className="flex items-center gap-1.5">
                               <Button
-                                variant="outline"
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setSnoozeTask(task)}
-                                className="rounded-2xl"
-                                style={{ touchAction: "manipulation" }}
+                                className="h-8 w-8 p-0 rounded-xl bg-white/20 hover:bg-orange/10 hover:text-orange transition-all border border-white/10"
+                                title="Snooze"
                               >
-                                <AlarmClock className="mr-2 h-4 w-4" />
-                                Snooze
+                                <AlarmClock className="h-4 w-4" />
                               </Button>
                               <Button
+                                size="sm"
                                 onClick={() => {
                                   setSelectedTask(task);
                                   setIsLogOpen(true);
                                 }}
-                                className="rounded-2xl"
-                                style={{ touchAction: "manipulation" }}
+                                className="h-8 px-4 font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-teal-base/10"
                               >
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                <CheckCircle2 className="mr-2 h-3.5 w-3.5" />
                                 Complete
                               </Button>
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
 
       <NewTaskModal
         isOpen={isCreateModalOpen}

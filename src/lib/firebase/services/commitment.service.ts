@@ -53,6 +53,25 @@ export async function getCommitmentById(id: string): Promise<Commitment | null> 
 }
 
 /**
+ * Fetches all commitments for a specific company.
+ */
+export async function getCommitmentsByCompanyId(companyId: string): Promise<Commitment[]> {
+  try {
+    const commitmentsRef = collection(db, "commitments");
+    const q = query(commitmentsRef, where("companyId", "==", companyId), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...(docSnap.data() as any)
+    })) as Commitment[];
+  } catch (error) {
+    console.error("Error fetching company commitments:", error);
+    return [];
+  }
+}
+
+/**
  * Fetches active commitment for a specific company.
  */
 export async function getActiveCommitmentByCompanyId(companyId: string): Promise<Commitment | null> {
@@ -206,10 +225,15 @@ export async function syncCommitmentStatuses() {
 /**
  * Checks for expiring commitments and creates renewal tasks if they don't exist.
  */
-export async function triggerRenewalTasks() {
+export async function triggerRenewalTasks(userId?: string, userRole?: string) {
   try {
     // First, sync statuses to ensure we catch all expiring commitments
-    await syncCommitmentStatuses();
+    // This requires write permission, which Reps typically lack for global records
+    try {
+      await syncCommitmentStatuses();
+    } catch (syncError) {
+      console.warn("[CRM] Skipping commitment status sync due to restricted permissions or network state.");
+    }
 
     const commitmentsRef = collection(db, "commitments");
     const q = query(commitmentsRef, where("status", "==", "Expiring"), where("active", "==", true));
@@ -219,7 +243,8 @@ export async function triggerRenewalTasks() {
       const commitment = { id: commitmentDoc.id, ...commitmentDoc.data() } as Commitment;
       
       // Check if an upcoming task already exists for this commitment/company
-      const existingTasks = await getTasksByEntity("COMPANY", commitment.companyId);
+      // We pass userId/Role to satisfy security rules for the check
+      const existingTasks = await getTasksByEntity("COMPANY", commitment.companyId, userId, userRole);
       const hasRenewalTask = existingTasks.some(t => 
         t.status === 'Upcoming' && t.subject.includes("Commitment Renewal")
       );
@@ -231,7 +256,7 @@ export async function triggerRenewalTasks() {
             subject: `Commitment Renewal: ${company.name}`,
             dueDate: commitment.endDate || commitment.renewalDate, 
             priority: 'High',
-            assignedRepId: company.assignedRepId || 'admin_id',
+            assignedRepId: company.assignedRepId || userId || 'system',
             entityType: 'COMPANY',
             entityId: company.id,
             entityName: company.name,

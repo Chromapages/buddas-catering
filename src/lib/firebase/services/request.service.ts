@@ -276,6 +276,37 @@ export async function getRequestsByContactId(
 }
 
 /**
+ * Fetches all catering requests for a specific lead.
+ */
+export async function getRequestsByLeadId(
+  leadId: string,
+  userId?: string,
+  userRole?: string
+) {
+  try {
+    const requestsRef = collection(db, "cateringRequests");
+    let q = query(
+      requestsRef, 
+      where("leadId", "==", leadId),
+      orderBy("createdAt", "desc")
+    );
+
+    if (userRole === "rep" && userId) {
+      q = query(q, where("assignedRepId", "==", userId));
+    }
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("Error fetching requests by lead:", error);
+    return [];
+  }
+}
+
+/**
  * Updates a catering request with new data.
  */
 export async function updateCateringRequest(id: string, data: Partial<CateringRequest>) {

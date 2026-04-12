@@ -151,13 +151,13 @@ export function RepDashboard() {
 
 
           {/* 2. New Leads Assigned */}
-          <Card className="border-gold/30 shadow-sm overflow-hidden">
-            <CardHeader className="bg-gold/5 border-b border-gold/10 py-4 flex flex-row items-center justify-between">
+          <Card variant="glass" className="border-teal-dark/10 dark:border-white/10 shadow-sm overflow-hidden">
+            <CardHeader className="bg-teal-dark/[0.03] dark:bg-white/5 border-b border-teal-dark/10 dark:border-white/10 py-4 flex flex-row items-center justify-between">
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-gold" />
-                <CardTitle className="text-lg font-heading">New Leads (No Activity)</CardTitle>
+                <Users className="h-5 w-5 text-teal-dark dark:text-brown" />
+                <CardTitle className="text-lg font-heading text-teal-dark dark:text-brown">New Leads (No Activity)</CardTitle>
               </div>
-              <Badge variant="warning">{newLeads.length}</Badge>
+              <Badge className="bg-teal-dark dark:bg-teal-base text-white border-none">{newLeads.length}</Badge>
             </CardHeader>
             <CardContent className="p-0">
               <ul className="divide-y divide-gray-border">
@@ -201,13 +201,13 @@ export function RepDashboard() {
           </Card>
 
           {/* 3. Activation Pipeline */}
-          <Card className="border-teal-base/30 shadow-sm overflow-hidden">
-            <CardHeader className="bg-teal-base/5 border-b border-teal-base/10 py-4 flex flex-row items-center justify-between">
+          <Card variant="glass" className="border-teal-dark/10 dark:border-white/10 shadow-sm overflow-hidden">
+            <CardHeader className="bg-teal-dark/[0.03] dark:bg-white/5 border-b border-teal-dark/10 dark:border-white/10 py-4 flex flex-row items-center justify-between">
               <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-teal-dark" />
-                <CardTitle className="text-lg font-heading">Needs First Order (Activation)</CardTitle>
+                <Zap className="h-5 w-5 text-teal-dark dark:text-brown" />
+                <CardTitle className="text-lg font-heading text-teal-dark dark:text-brown">Needs First Order (Activation)</CardTitle>
               </div>
-              <Badge variant="neutral">{activationPipeline?.length || 0}</Badge>
+              <Badge className="bg-teal-dark/10 dark:bg-teal-base/20 text-teal-dark dark:text-teal-base border-none">{activationPipeline?.length || 0}</Badge>
             </CardHeader>
             <CardContent className="p-0">
               <ul className="divide-y divide-gray-border">
@@ -249,11 +249,11 @@ export function RepDashboard() {
           </Card>
 
           {/* 4. Stale Leads */}
-          <Card className="border-gray-border shadow-sm overflow-hidden opacity-90">
-            <CardHeader className="py-4 border-b border-gray-border">
+          <Card variant="glass" className="border-teal-dark/10 dark:border-white/10 shadow-sm overflow-hidden opacity-95">
+            <CardHeader className="py-4 border-b border-teal-dark/10 dark:border-white/10 bg-teal-dark/[0.01] dark:bg-white/5">
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-brown/40" />
-                <CardTitle className="text-lg font-heading text-brown/70">Stale Leads ({'>'} 3 Days)</CardTitle>
+                <Clock className="h-5 w-5 text-teal-dark/40 dark:text-brown/40" />
+                <CardTitle className="text-lg font-heading text-teal-dark/70 dark:text-brown/80">Stale Leads ({'>'} 3 Days)</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0">

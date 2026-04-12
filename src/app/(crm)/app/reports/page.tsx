@@ -132,254 +132,215 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-10">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-10 overscroll-y-contain">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 group">
         <div>
-          <h1 className="text-3xl font-bold font-heading text-teal-dark tracking-tight">Catering Intelligence</h1>
-          <p className="text-sm text-brown/60 mt-1">Strategic performance insights and predictive lead analytics.</p>
+          <h1 className="text-4xl font-bold font-heading text-teal-dark tracking-tight">Intelligence</h1>
+          <p className="text-sm text-brown/60 mt-1 font-medium italic">Strategic performance insights and predictive lead analytics.</p>
         </div>
         <div className="flex gap-3">
           <Button 
             variant="outline" 
-            className="border-teal-base/30 text-teal-dark font-bold hover:bg-teal-base/5"
+            className="border-white/20 bg-white/40 backdrop-blur-md text-teal-dark font-black uppercase tracking-widest text-[10px] h-10 px-6 rounded-xl hover:bg-white/60 transition-all shadow-xl shadow-teal-dark/5"
             onClick={handleExport}
           >
-            Snapshot Export
+            Export Snapshot
           </Button>
           <Button 
-            className="bg-teal-dark hover:bg-teal-base shadow-teal-base/20 transition-all font-bold"
+            className="bg-teal-dark hover:bg-teal-base shadow-lg shadow-teal-dark/20 transition-all font-black uppercase tracking-widest text-[10px] h-10 px-6 rounded-xl hover:scale-105"
             onClick={handleCustomAudit}
           >
-            Generate Custom Audit
+            Generate Audit
           </Button>
         </div>
       </div>
 
       {/* Primary KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-white border-teal-base/10 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="p-6">
+        {[
+          { label: "Revenue", value: `$${repMetrics.reduce((a, b) => a + b.totalRevenue, 0).toLocaleString()}`, icon: DollarSign, sub: "Total Fulfilled Pipeline", color: "text-teal-base" },
+          { label: "Win Rate", value: `${repMetrics.length > 0 ? Math.round(repMetrics.reduce((a, b) => a + b.closeRate, 0) / repMetrics.length) : 0}%`, icon: Target, sub: "Avg Rep Conversion", color: "text-orange" },
+          { label: "Deal Size", value: `$${repMetrics.length > 0 ? Math.round(repMetrics.reduce((a, b) => a + b.avgDealSize, 0) / repMetrics.length).toLocaleString() : 0}`, icon: TrendingUp, sub: "Average Order Value", color: "text-teal-dark" },
+          { label: "Velocity", value: `${velocity.length > 0 ? Math.round(velocity.reduce((a, b) => a + b.avgDays, 0)) : 0}d`, icon: Calendar, sub: "Avg Cycle to Close", color: "text-teal-dark" }
+        ].map((kpi, idx) => (
+          <Card key={idx} variant="glass" className="border-white/20 p-6 group hover:bg-white/40 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-teal-dark/5">
             <div className="flex justify-between items-start">
-              <div className="p-2 bg-teal-base/10 rounded-lg">
-                <DollarSign className="w-5 h-5 text-teal-dark" />
+              <div className={cn("p-2.5 rounded-2xl shadow-inner", kpi.color.replace('text-', 'bg-').concat('/10'))}>
+                <kpi.icon className={cn("w-5 h-5", kpi.color)} />
               </div>
-              <span className="text-[10px] font-bold text-teal-base uppercase tracking-widest bg-teal-base/5 px-2 py-1 rounded-full">Revenue</span>
+              <span className="text-[9px] font-black text-teal-dark/40 uppercase tracking-[0.2em]">{kpi.label}</span>
             </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-extrabold text-teal-dark">${repMetrics.reduce((a, b) => a + b.totalRevenue, 0).toLocaleString()}</h3>
-              <p className="text-[10px] text-brown/50 font-bold uppercase tracking-tighter mt-1">Total Fulfilled Pipeline</p>
+            <div className="mt-5">
+              <h3 className="text-3xl font-bold text-teal-dark tracking-tight leading-none group-hover:text-teal-base transition-colors">{kpi.value}</h3>
+              <p className="text-[10px] text-brown/40 font-black uppercase tracking-[0.1em] mt-2 leading-none">{kpi.sub}</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border-teal-base/10 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="p-2 bg-amber-500/10 rounded-lg">
-                <Target className="w-5 h-5 text-amber-600" />
-              </div>
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-amber-500/5 px-2 py-1 rounded-full">Win Rate</span>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-extrabold text-teal-dark">
-                {repMetrics.length > 0 ? Math.round(repMetrics.reduce((a, b) => a + b.closeRate, 0) / repMetrics.length) : 0}%
-              </h3>
-              <p className="text-[10px] text-brown/50 font-bold uppercase tracking-tighter mt-1">Avg Rep Conversion</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border-teal-base/10 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="p-2 bg-indigo-500/10 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-indigo-600" />
-              </div>
-              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest bg-indigo-500/5 px-2 py-1 rounded-full">Deal Size</span>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-extrabold text-teal-dark">
-                ${repMetrics.length > 0 ? Math.round(repMetrics.reduce((a, b) => a + b.avgDealSize, 0) / repMetrics.length).toLocaleString() : 0}
-              </h3>
-              <p className="text-[10px] text-brown/50 font-bold uppercase tracking-tighter mt-1">Average Order Value</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border-teal-base/10 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="p-2 bg-teal-dark/10 rounded-lg">
-                <Calendar className="w-5 h-5 text-teal-dark" />
-              </div>
-              <span className="text-[10px] font-bold text-teal-dark uppercase tracking-widest bg-teal-dark/5 px-2 py-1 rounded-full">Velocity</span>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-extrabold text-teal-dark">
-                {velocity.length > 0 ? Math.round(velocity.reduce((a, b) => a + b.avgDays, 0)) : 0}d
-              </h3>
-              <p className="text-[10px] text-brown/50 font-bold uppercase tracking-tighter mt-1">Avg Cycle to Close</p>
-            </div>
-          </CardContent>
-        </Card>
+          </Card>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Sales Performance Leaderboard */}
-        <Card className="lg:col-span-2 shadow-sm border-teal-base/20 border-t-4 border-t-teal-dark">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Users className="w-5 h-5 text-teal-base" /> Sales Leaderboard
-              </CardTitle>
-              <div className="flex gap-2">
-                 <div className="w-2.5 h-2.5 rounded-full bg-teal-base animate-pulse"></div>
-                 <span className="text-[10px] font-bold text-brown/40 uppercase tracking-widest">Performance Sync</span>
+        <Card variant="glass" className="lg:col-span-2 border-white/20 overflow-hidden shadow-xl shadow-teal-dark/5">
+          <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/20">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-teal-base/20 rounded-xl">
+                <Users className="w-5 h-5 text-teal-dark" />
               </div>
+              <h2 className="text-xs font-black uppercase tracking-[0.25em] text-teal-dark">Sales Leaderboard</h2>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-gray-bg border-y border-gray-border">
-                  <tr>
-                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-brown/50">Rep Name</th>
-                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-brown/50">Close Rate</th>
-                    <th className="px-6 py-3 text-[10px) font-bold uppercase tracking-widest text-brown/50">Avg Deal</th>
-                    <th className="px-6 py-3 text-[10px) font-bold uppercase tracking-widest text-brown/50 text-right">Revenue</th>
+            <div className="flex items-center gap-2">
+               <div className="w-2 h-2 rounded-full bg-teal-base animate-pulse shadow-[0_0_8px_rgba(45,212,191,0.6)]"></div>
+               <span className="text-[10px] font-black text-brown/40 uppercase tracking-widest leading-none">Realtime Sync</span>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-white/10">
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-brown/40">Rep Name</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-brown/40 text-center">Close Rate</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-brown/40 text-center">Avg Deal</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-brown/40 text-right">Revenue</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {repMetrics.map((rep, idx) => (
+                  <tr key={idx} className="hover:bg-white/40 transition-colors group">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-9 h-9 rounded-2xl flex items-center justify-center font-black text-[11px] ring-2 ring-white/50 shadow-inner",
+                          idx === 0 ? "bg-orange/20 text-orange" : "bg-teal-base/20 text-teal-dark"
+                        )}>
+                          #{idx + 1}
+                        </div>
+                        <span className="font-bold text-teal-dark group-hover:text-teal-base transition-colors">{rep.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="text-xs font-black text-teal-dark tabular-nums">{rep.closeRate}%</span>
+                        <div className="w-24 h-1 bg-white/20 rounded-full overflow-hidden shadow-inner">
+                          <div className="bg-teal-base h-full shadow-[0_0_8px_rgba(45,212,191,0.4)]" style={{ width: `${rep.closeRate}%` }}></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-center">
+                      <span className="text-xs font-black text-teal-dark/60 tabular-nums">${rep.avgDealSize.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <span className="px-4 py-1.5 bg-teal-dark text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-dark/20">
+                        ${rep.totalRevenue.toLocaleString()}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-border">
-                  {repMetrics.map((rep, idx) => (
-                    <tr key={idx} className="hover:bg-teal-base/5 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm",
-                            idx === 0 ? "bg-amber-100 text-amber-700" : "bg-teal-base/10 text-teal-dark"
-                          )}>
-                            {idx + 1}
-                          </div>
-                          <span className="font-bold text-teal-dark group-hover:text-teal-base transition-colors">{rep.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-brown">{rep.closeRate}%</span>
-                          <div className="w-16 h-1.5 bg-gray-border/30 rounded-full overflow-hidden">
-                            <div className="bg-teal-base h-full" style={{ width: `${rep.closeRate}%` }}></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-bold text-brown/70 text-sm">${rep.avgDealSize.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="px-3 py-1 bg-teal-dark text-white rounded-full text-xs font-bold shadow-sm shadow-teal-dark/10">
-                          ${rep.totalRevenue.toLocaleString()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
 
         {/* Company Lifetime Value */}
-        <Card className="shadow-sm border-teal-base/20">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-teal-base" /> Top Company LTV
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <div className="space-y-6">
-              {ltvStats.map((stat, idx) => (
-                <div key={idx} className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-bold text-brown/70 truncate max-w-[150px] uppercase tracking-tight">{stat.name}</span>
-                    <span className="font-black text-teal-dark">${stat.value.toLocaleString()}</span>
-                  </div>
-                  <div className="w-full bg-gray-border/20 h-2 rounded-full overflow-hidden shadow-inner">
-                    <div 
-                      className="bg-teal-base h-full transition-all duration-700 delay-100" 
-                      style={{ width: `${(stat.value / ltvStats[0].value) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+        <Card variant="glass" className="border-white/20 p-6 shadow-xl shadow-teal-dark/5">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-orange/15 rounded-xl">
+              <PieChart className="w-5 h-5 text-orange" />
             </div>
-            {ltvStats.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-sm text-brown/40 italic">Data pending fulfillment...</p>
+            <h2 className="text-xs font-black uppercase tracking-[0.25em] text-teal-dark">High LTV Accounts</h2>
+          </div>
+          <div className="space-y-8">
+            {ltvStats.map((stat, idx) => (
+              <div key={idx} className="group cursor-default">
+                <div className="flex justify-between items-end mb-2.5">
+                  <span className="text-[10px] font-black text-teal-dark/40 uppercase tracking-widest truncate max-w-[160px] group-hover:text-teal-dark transition-colors">{stat.name}</span>
+                  <span className="text-sm font-black text-teal-dark tabular-nums">${stat.value.toLocaleString()}</span>
+                </div>
+                <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden shadow-inner ring-1 ring-white/10">
+                  <div 
+                    className="bg-orange/70 h-full transition-all duration-1000 delay-100 shadow-[0_0_12px_rgba(249,115,22,0.3)]" 
+                    style={{ width: `${(stat.value / (ltvStats[0]?.value || 1)) * 100}%` }}
+                  ></div>
+                </div>
               </div>
-            )}
-          </CardContent>
+            ))}
+          </div>
+          {ltvStats.length === 0 && (
+            <div className="py-20 text-center">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="w-6 h-6 text-teal-dark/20" />
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-teal-dark/20 leading-loose">Awaiting fulfillment<br/>conversion data</p>
+            </div>
+          )}
         </Card>
       </div>
 
       {/* Grid for Funnel Velocity & Source Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         {/* Pipeline Velocity Chart */}
-         <Card className="shadow-sm border-teal-base/20">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-teal-base" /> Channel Performance (Leads)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-               <div className="space-y-4">
-                 {sourceStats.map((stat, idx) => (
-                   <div key={idx} className="flex items-center gap-4">
-                     <span className="text-[10px] font-bold text-brown/40 w-24 truncate text-right uppercase tracking-widest">{stat.name}</span>
-                     <div className="flex-1 h-8 bg-gray-bg rounded-lg overflow-hidden border border-gray-border/10 flex items-center px-1">
-                        <div 
-                          className="h-6 bg-teal-dark/80 rounded-md shadow-sm transition-all duration-1000 flex items-center justify-end px-2"
-                          style={{ width: `${(stat.value / Math.max(...sourceStats.map(s => s.value))) * 100}%` }}
-                        >
-                          <span className="text-[10px] font-bold text-white">{stat.value}</span>
-                        </div>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-            </CardContent>
+         {/* Lead Source Bar Chart */}
+         <Card variant="glass" className="border-white/20 p-7 shadow-xl shadow-teal-dark/5">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-teal-base/20 rounded-xl">
+                <BarChart3 className="w-5 h-5 text-teal-dark" />
+              </div>
+              <h2 className="text-xs font-black uppercase tracking-[0.25em] text-teal-dark">Channel Efficiency</h2>
+            </div>
+            <div className="space-y-6">
+              {sourceStats.map((stat, idx) => (
+                <div key={idx} className="flex items-center gap-6 group">
+                  <span className="text-[10px] font-black text-teal-dark/30 w-24 truncate text-right uppercase tracking-[0.15em] group-hover:text-teal-dark transition-colors">{stat.name}</span>
+                  <div className="flex-1 h-10 bg-white/10 rounded-2xl overflow-hidden border border-white/10 flex items-center px-1 shadow-inner">
+                    <div 
+                      className="h-8 bg-teal-dark rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-all duration-1000 flex items-center justify-end px-3 hover:bg-teal-base transition-all"
+                      style={{ width: `${(stat.value / Math.max(...sourceStats.map(s => s.value), 1)) * 100}%` }}
+                    >
+                      <span className="text-[10px] font-black text-white tabular-nums">{stat.value}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
          </Card>
 
-         <Card className="bg-teal-dark text-white border-none shadow-xl overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <BarChart3 className="w-32 h-32" />
+         <Card className="bg-teal-dark text-white border-none shadow-2xl shadow-teal-dark/40 overflow-hidden relative p-8 flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 opacity-10 blur-3xl w-64 h-64 bg-teal-light rounded-full" />
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <ArrowUpRight className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xs font-black uppercase tracking-[0.25em] text-white/60">Funnel Dynamics</h2>
+              </div>
+              
+              <div className="space-y-5 flex-1">
+                {velocity.length > 0 ? velocity.map((v, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-5 bg-white/10 rounded-2xl hover:bg-white/20 transition-all border border-white/5 backdrop-blur-sm group">
+                    <div className="flex flex-col gap-1">
+                       <span className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-light group-hover:text-white transition-colors">{v.stage}</span>
+                       <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.1em]">Stage Residence</span>
+                    </div>
+                    <div className="text-right">
+                       <span className="text-2xl font-black tabular-nums">{v.avgDays}<span className="text-sm ml-1 text-white/40">D</span></span>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="py-12 text-center text-white/30">
+                    <TrendingUp className="w-8 h-8 mx-auto mb-4 opacity-20" />
+                    <p className="text-[10px] font-black uppercase tracking-widest leading-loose">History needed for<br/>velocity plotting</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <CardHeader>
-              <CardTitle className="text-white/80 text-sm flex items-center gap-2">
-                <ArrowUpRight className="w-4 h-4" /> Funnel Velocity (Avg Days)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-4">
-               {velocity.length > 0 ? velocity.map((v, idx) => (
-                 <div key={idx} className="flex items-center justify-between p-3 bg-white/10 rounded-2xl hover:bg-white/20 transition-all border border-white/5">
-                    <div className="flex items-center gap-3">
-                       <span className="text-xs font-black uppercase tracking-widest text-teal-light">{v.stage}</span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                       <span className="text-xl font-extrabold">{v.avgDays} days</span>
-                       <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Time in stage</span>
-                    </div>
-                 </div>
-               )) : (
-                 <div className="py-8 text-center text-white/40 italic">
-                   Velocity data requires status transition history.
-                 </div>
-               )}
-               <Button 
-                 variant="secondary" 
-                 className="w-full bg-white text-teal-dark hover:bg-teal-light border-none font-bold py-6 rounded-2xl shadow-lg"
-                 onClick={handleAnalyze}
-               >
-                 Analyze Bottlenecks <TrendingUp className="w-4 h-4 ml-2" />
-               </Button>
-            </CardContent>
+
+            <Button 
+              size="lg"
+              className="mt-10 relative z-10 bg-white text-teal-dark hover:bg-teal-light hover:scale-[1.02] transition-all font-black uppercase tracking-[0.2em] text-xs h-14 rounded-[20px] shadow-2xl"
+              onClick={handleAnalyze}
+            >
+              Run Diagnostic <TrendingUp className="w-5 h-5 ml-3" />
+            </Button>
          </Card>
       </div>
     </div>

@@ -21,6 +21,7 @@ import { Input } from "@/components/shared/Input";
 import { Select } from "@/components/shared/Select";
 import { Button } from "@/components/shared/Button";
 import { Badge } from "@/components/shared/Badge";
+import { Card, CardContent } from "@/components/shared/Card";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import {
   DropdownMenu,
@@ -41,7 +42,7 @@ import {
   getAllLeads,
 } from "@/lib/firebase/services/crm";
 import { exportToCsv } from "@/lib/utils/export";
-import { formatDate, parseDate } from "@/lib/utils";
+import { cn, formatDate, parseDate } from "@/lib/utils";
 
 type RequestStatus = "Pending" | "Confirmed" | "Fulfilled" | "Invoiced" | "Paid" | "Cancelled";
 type SortField = "company" | "date" | "amount";
@@ -260,8 +261,8 @@ export default function RequestsPage() {
     <div className="flex h-full flex-col p-6 lg:p-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-teal-dark">Requests</h1>
-          <p className="mt-1 text-sm text-brown/70">Manage incoming catering inquiries before they move into fulfillment.</p>
+          <h1 className="font-heading text-3xl font-bold text-teal-dark">Inbound Requests</h1>
+          <p className="mt-1 text-sm text-brown/70 font-medium tracking-tight">Qualify and convert incoming inquiries into realized catering events.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -291,252 +292,305 @@ export default function RequestsPage() {
         </div>
       </div>
 
-      <div className="rounded-t-xl border border-gray-border bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brown/40" />
+      <Card variant="glass" className="flex-1 flex flex-col overflow-hidden border-white/20">
+        {/* Search & Filters */}
+        <div className="px-5 py-4 border-b border-white/10 flex flex-wrap gap-4 items-center justify-between">
+          <div className="relative w-full sm:max-w-md group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brown/40 group-focus-within:text-teal-base transition-colors" />
             <Input
               placeholder="Search company, contact, or email..."
-              className="pl-9"
+              className="pl-9 h-10 border-white/20 bg-white/20 focus:bg-white/40 placeholder:text-brown/30"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-brown/60" />
-              <Select
-                className="w-44 h-10"
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white/20 p-1.5 rounded-xl border border-white/10">
+              <Filter className="w-3.5 h-3.5 text-brown/40 ml-1.5" />
+              <select
+                className="text-[10px] font-black uppercase tracking-widest border-none rounded-lg px-3 py-1.5 bg-transparent focus:ring-0 text-teal-dark cursor-pointer"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                options={[
-                  { value: "All", label: "All Statuses" },
-                  ...STATUS_OPTIONS,
-                ]}
-              />
+              >
+                <option value="All">ALL STATUSES</option>
+                {STATUS_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label.toUpperCase()}</option>
+                ))}
+              </select>
             </div>
-
-            {selectedIds.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-orange/20 bg-orange/5 px-3 py-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-orange">{selectedIds.length} selected</span>
-                <Select
-                  className="h-9 w-44"
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      void handleBatchStatusUpdate(e.target.value as RequestStatus);
-                      e.target.value = "";
-                    }
-                  }}
-                  placeholder="Bulk status"
-                  options={STATUS_OPTIONS}
-                />
-                <Button variant="outline" size="sm" className="border-orange/30 text-orange" onClick={handleBatchDelete}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
-            ) : null}
           </div>
         </div>
-      </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden rounded-b-xl border-x border-b border-gray-border bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full whitespace-nowrap text-left text-sm">
-            <thead className="border-b border-gray-border bg-gray-bg/50 font-medium text-brown/70">
-              <tr>
-                <th className="px-4 py-4">
-                  <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
-                </th>
-                <th className="cursor-pointer px-6 py-4 hover:bg-gray-200/50" onClick={() => handleSort("company")}>
-                  Company <SortIcon field="company" />
-                </th>
-                <th className="px-6 py-4">Contact</th>
-                <th className="px-6 py-4">Request</th>
-                <th className="cursor-pointer px-6 py-4 hover:bg-gray-200/50" onClick={() => handleSort("date")}>
-                  Event Date <SortIcon field="date" />
-                </th>
-                <th className="cursor-pointer px-6 py-4 hover:bg-gray-200/50" onClick={() => handleSort("amount")}>
-                  Amount <SortIcon field="amount" />
-                </th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-border text-brown">
-              {isLoading ? (
+        {/* Table Content */}
+        <CardContent className="p-0 overflow-hidden flex-1 flex flex-col relative">
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full whitespace-nowrap text-left text-sm">
+              <thead className="bg-white/20 border-b border-white/10 text-[10px] font-black uppercase tracking-[0.15em] text-brown/40">
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-brown/50">
-                    Loading requests...
-                  </td>
+                  <th className="px-6 py-4 w-12">
+                    <input 
+                      type="checkbox" 
+                      className="rounded-md border-white/30 bg-white/10 text-teal-base focus:ring-teal-base"
+                      checked={allSelected} 
+                      onChange={toggleSelectAll} 
+                    />
+                  </th>
+                  <th className="cursor-pointer px-6 py-4 hover:bg-white/30 transition-colors" onClick={() => handleSort("company")}>
+                    Company <SortIcon field="company" />
+                  </th>
+                  <th className="px-6 py-4">Contact</th>
+                  <th className="px-6 py-4">Inquiry details</th>
+                  <th className="cursor-pointer px-6 py-4 hover:bg-white/30 transition-colors" onClick={() => handleSort("date")}>
+                    Preferred Date <SortIcon field="date" />
+                  </th>
+                  <th className="cursor-pointer px-6 py-4 hover:bg-white/30 transition-colors" onClick={() => handleSort("amount")}>
+                    est. Budget <SortIcon field="amount" />
+                  </th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
-              ) : paginatedRequests.length > 0 ? (
-                paginatedRequests.map((request) => {
-                  const requestLead = request.leadId ? leadMap.get(request.leadId) : null;
+              </thead>
+              <tbody className="divide-y divide-white/10 text-brown">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-24 text-center text-brown/40">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                         <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-base border-t-transparent shadow-lg shadow-teal-base/20"></div>
+                         <span className="font-black uppercase tracking-widest text-[10px]">Filtering Data Stream...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginatedRequests.length > 0 ? (
+                  paginatedRequests.map((request) => {
+                    const requestLead = request.leadId ? leadMap.get(request.leadId) : null;
 
-                  return (
-                    <tr
-                      key={request.id}
-                      className="group cursor-pointer transition-colors hover:bg-gray-bg/40"
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setLinkedLead(null);
-                      }}
-                    >
-                      <td
-                        className="px-4 py-4"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                    return (
+                      <tr
+                        key={request.id}
+                        className={cn(
+                          "group transition-all hover:bg-white/40 cursor-pointer",
+                          selectedIds.includes(request.id) ? "bg-teal-base/5" : ""
+                        )}
+                        onClick={() => {
+                          setSelectedRequest(request);
+                          setLinkedLead(null);
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(request.id)}
-                          onChange={() => toggleSelect(request.id)}
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-semibold">{request.companyName || "Unknown Company"}</span>
-                          <span className="text-xs text-brown/50">#{request.id.slice(-6)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span>{request.contactName || "Unknown Contact"}</span>
-                          <span className="text-xs text-brown/50">{request.email || "No email"}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="max-w-[220px]">
-                          <p className="truncate font-medium">{request.cateringNeed || request.eventType || "General Inquiry"}</p>
-                          <p className="text-xs text-brown/50">
-                            {request.estimatedGroupSize ? `${request.estimatedGroupSize} guests` : "Guest count TBD"}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {request.preferredDate ? formatDate(request.preferredDate, "MMM d, yyyy") : "TBD"}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-teal-dark">
-                        {request.quoteAmount != null
-                          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(request.quoteAmount)
-                          : "—"}
-                      </td>
-                      <td className="px-6 py-4">{getStatusBadge(request.fulfillmentStatus)}</td>
-                      <td
-                        className="px-6 py-4 text-right"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        <div className="flex items-center justify-end gap-2">
-                          {requestLead ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="hidden h-8 px-2 text-teal-dark opacity-70 md:flex group-hover:opacity-100"
-                              onClick={() => setLinkedLead(requestLead)}
-                            >
-                              Linked Lead
-                            </Button>
-                          ) : null}
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                            className="hidden h-8 px-2 text-teal-dark opacity-70 md:flex group-hover:opacity-100"
-                          >
-                            <Link href={`/app/orders/${request.id}`}>
-                              View Order
-                              <ArrowRight className="ml-1 h-3 w-3" />
-                            </Link>
-                          </Button>
-
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="rounded-lg p-2 text-brown/40 transition-colors hover:bg-gray-bg hover:text-brown">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuLabel>Request Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setLinkedLead(null);
-                                }}
+                        <td
+                          className="px-6 py-4"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            className="rounded-md border-white/30 bg-teal-dark/5 text-teal-base focus:ring-teal-base"
+                            checked={selectedIds.includes(request.id)}
+                            onChange={() => toggleSelect(request.id)}
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-orange/5 group-hover:bg-orange/10 flex items-center justify-center transition-colors">
+                              <ClipboardList className="w-4 h-4 text-orange" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-teal-dark leading-tight">{request.companyName || "Unknown Entity"}</span>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-brown/20">REQ-{request.id.slice(-6).toUpperCase()}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-brown/80">{request.contactName || "Anonymous"}</span>
+                            <span className="text-[11px] text-brown/40 font-medium">{request.email || "No direct email"}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="max-w-[240px]">
+                            <p className="truncate font-bold text-teal-dark/70 text-xs italic">
+                              "{request.cateringNeed || request.eventType || "General Catering Request"}"
+                            </p>
+                            <p className="text-[10px] font-black text-brown/30 uppercase tracking-wider mt-0.5">
+                              {request.estimatedGroupSize ? `${request.estimatedGroupSize} GUESTS` : "SCALE UNDEFINED"}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-semibold text-brown/50">
+                          {request.preferredDate ? formatDate(request.preferredDate, "MMM d, yyyy") : "OPEN DATE"}
+                        </td>
+                        <td className="px-6 py-4 font-black tabular-nums text-teal-dark scale-105">
+                          {request.quoteAmount != null
+                            ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(request.quoteAmount)
+                            : "—"}
+                        </td>
+                        <td className="px-6 py-4">{getStatusBadge(request.fulfillmentStatus)}</td>
+                        <td
+                          className="px-6 py-4 text-right"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <div className="flex items-center justify-end gap-1">
+                            {requestLead && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-3 text-orange bg-orange/5 hover:bg-orange/10 font-black text-[9px] uppercase tracking-widest transition-all"
+                                onClick={() => setLinkedLead(requestLead)}
                               >
-                                <ClipboardList className="mr-2 h-4 w-4" />
-                                Open Request
-                              </DropdownMenuItem>
-                              {requestLead ? (
-                                <DropdownMenuItem onClick={() => setLinkedLead(requestLead)}>
-                                  <ArrowRight className="mr-2 h-4 w-4" />
-                                  Open Linked Lead
-                                </DropdownMenuItem>
-                              ) : null}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-orange focus:text-orange" onClick={() => setDeleteId(request.id)}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Request
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-brown/50">
-                    <div className="flex flex-col items-center gap-2">
-                      <ClipboardList className="h-8 w-8 text-brown/20" />
-                      <p>No requests found.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                                Linked lead
+                              </Button>
+                            )}
 
-        <div className="mt-auto flex items-center justify-between border-t border-gray-border bg-gray-bg/30 px-6 py-4">
-          <p className="text-sm text-brown/60">
-            Showing <span className="font-medium text-brown">{sortedRequests.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> to{" "}
-            <span className="font-medium text-brown">{Math.min(currentPage * itemsPerPage, sortedRequests.length)}</span> of{" "}
-            <span className="font-medium text-brown">{sortedRequests.length}</span> results
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              disabled={currentPage === 1}
-              className="px-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="px-2 text-sm font-medium text-brown">
-              Page {currentPage} of {totalPages || 1}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((page) => Math.min(totalPages || 1, page + 1))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-2"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="rounded-xl p-2 text-brown/40 transition-colors hover:bg-white/40 hover:text-brown">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52 bg-white/95 backdrop-blur-xl border-white/20 shadow-2xl rounded-2xl p-1">
+                                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-brown/40 px-3 py-2">Management</DropdownMenuLabel>
+                                <DropdownMenuSeparator className="bg-brown/5" />
+                                <DropdownMenuItem
+                                  className="flex items-center px-3 py-2 text-sm font-semibold rounded-xl hover:bg-teal-base/5 cursor-pointer transition-colors"
+                                  onClick={() => {
+                                    setSelectedRequest(request);
+                                    setLinkedLead(null);
+                                  }}
+                                >
+                                  <ClipboardList className="mr-2 h-4 w-4 text-teal-base" />
+                                  View details
+                                </DropdownMenuItem>
+                                {requestLead && (
+                                  <DropdownMenuItem 
+                                    className="flex items-center px-3 py-2 text-sm font-semibold rounded-xl hover:bg-orange/5 cursor-pointer transition-colors"
+                                    onClick={() => setLinkedLead(requestLead)}
+                                  >
+                                    <ArrowRight className="mr-2 h-4 w-4 text-orange" />
+                                    View lead record
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/app/orders/${request.id}`} className="flex items-center px-3 py-2 text-sm font-semibold rounded-xl hover:bg-teal-base/5 cursor-pointer transition-colors text-teal-dark">
+                                    <ArrowRight className="mr-2 h-4 w-4" />
+                                    Go to Fulfillment
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-brown/5" />
+                                <DropdownMenuItem 
+                                  className="flex items-center px-3 py-2 text-sm font-semibold rounded-xl hover:bg-red-400/10 cursor-pointer transition-colors text-red-500"
+                                  onClick={() => setDeleteId(request.id)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Inquiry
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-24 text-center text-brown/30 italic font-medium">
+                      <div className="flex flex-col items-center gap-3">
+                        <ClipboardList className="h-10 w-10 opacity-20" />
+                        <p>No catering requests found matching your query.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
+
+          {/* Floating Batch Actions Bar */}
+          {selectedIds.length > 0 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <Card variant="glass" className="bg-teal-dark/95 border-teal-base/20 shadow-2xl py-2 px-3 flex items-center gap-4">
+                <div className="flex items-center gap-2 pl-2">
+                  <div className="w-5 h-5 rounded-full bg-teal-base flex items-center justify-center text-[10px] font-black text-white">
+                    {selectedIds.length}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Selected</span>
+                </div>
+                
+                <div className="h-4 w-px bg-white/10" />
+                
+                <div className="flex items-center gap-2">
+                  <select
+                    className="h-8 bg-white/10 border-white/20 rounded-lg text-[10px] font-black uppercase tracking-widest text-white px-3 focus:ring-0 cursor-pointer"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        void handleBatchStatusUpdate(e.target.value as RequestStatus);
+                      }
+                    }}
+                  >
+                    <option value="" className="text-teal-dark">UPDATE STATUS</option>
+                    {STATUS_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value} className="text-teal-dark">{opt.label.toUpperCase()}</option>
+                    ))}
+                  </select>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-black text-[10px] uppercase tracking-widest"
+                    onClick={handleBatchDelete}
+                  >
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                    Archive
+                  </Button>
+                </div>
+                
+                <div className="h-4 w-px bg-white/10" />
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 px-3 text-white/40 hover:text-white font-black text-[10px] uppercase tracking-widest"
+                  onClick={() => setSelectedIds([])}
+                >
+                  Deselect all
+                </Button>
+              </Card>
+            </div>
+          )}
+
+          {/* Pagination bar */}
+          <div className="px-6 py-4 border-t border-white/10 bg-white/5 flex items-center justify-between mt-auto">
+            <p className="text-[11px] font-black text-brown/40 uppercase tracking-widest">
+              Showing <span className="text-teal-dark">{sortedRequests.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}</span> - <span className="text-teal-dark">{Math.min(currentPage * itemsPerPage, sortedRequests.length)}</span> <span className="mx-1 opacity-40">/</span> {sortedRequests.length} results
+            </p>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="h-8 w-8 p-0 border-white/20 bg-white/20 hover:bg-white/40"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-[10px] font-black text-teal-dark/60 bg-white/30 h-8 px-3 flex items-center rounded-lg border border-white/10">
+                {currentPage} <span className="mx-1 opacity-30 text-[8px]">OF</span> {totalPages || 1}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages || 1, page + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="h-8 w-8 p-0 border-white/20 bg-white/20 hover:bg-white/40"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <RequestSlideOver
         isOpen={!!selectedRequest}

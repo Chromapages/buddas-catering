@@ -2,65 +2,73 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getPipelineFunnelStats } from "@/lib/firebase/services/crm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shared/Card";
-import { Skeleton } from "@/components/shared/Skeleton";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { TrendingUp, Target, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function PipelineFunnel() {
+export function PipelineFunnel({ className }: { className?: string }) {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['pipeline-funnel'],
     queryFn: () => getPipelineFunnelStats(),
   });
 
-  if (isLoading) return <Skeleton className="h-[300px] w-full" />;
+  if (isLoading) return <div className={cn("h-full w-full animate-pulse bg-v-surface rounded-[24px] shadow-ambient", className)} />;
   if (!stats) return null;
 
   const steps = [
-    { label: "New Leads", value: stats.newLeads, color: "bg-teal-base/20 border-teal-base/10" },
-    { label: "Contacted", value: stats.contactedLeads, color: "bg-teal-base/40 border-teal-base/20" },
-    { label: "Qualified (Won)", value: stats.qualifiedLeads, color: "bg-teal-base/60 border-teal-base/30 text-white" },
-    { label: "Enrolled (Active)", value: stats.enrolledAccounts, color: "bg-teal-base/80 border-teal-base/40 text-white" },
-    { label: "Renewed", value: stats.renewedMemberships, color: "bg-teal-dark border-teal-dark text-white" },
+    { label: "Pipeline Entry", value: stats.newLeads, intensity: "bg-v-primary/5 border-v-primary/10 text-v-on-surface" },
+    { label: "Direct Engagement", value: stats.contactedLeads, intensity: "bg-v-primary/15 border-v-primary/20 text-v-on-surface" },
+    { label: "Qualified Intent", value: stats.qualifiedLeads, intensity: "bg-v-primary/30 border-v-primary/30 text-v-on-surface" },
+    { label: "Active Accounts", value: stats.enrolledAccounts, intensity: "bg-v-primary/50 border-v-primary/40 text-white" },
+    { label: "Retention Wins", value: stats.renewedMemberships, intensity: "bg-v-primary border-v-primary text-white" },
   ];
 
   return (
-    <Card className="border-gray-border/60 shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-heading font-semibold text-brown">Conversion Funnel</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6 pt-4">
-        <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col h-full bg-v-surface border border-v-outline/20 shadow-ambient", className)}>
+      <div className="px-6 py-5 border-b border-v-outline/20 bg-v-container/30">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-v-primary" />
+          <h3 className="text-xs font-bold uppercase tracking-widest text-v-on-surface">Revenue Pipeline</h3>
+        </div>
+      </div>
+      
+      <div className="flex-1 p-6 space-y-8 flex flex-col justify-center">
+        <div className="flex flex-col gap-3">
           {steps.map((step, i) => (
-            <div key={i} className="flex items-center gap-4">
+            <div key={i} className="flex items-center gap-4 group">
               <div 
-                className={`h-12 flex items-center justify-between px-6 rounded-lg border flex-1 transition-all hover:scale-[1.02] cursor-default ${step.color}`}
-                style={{ width: `${100 - (i * 10)}%` }}
+                className={cn(
+                  "h-12 flex items-center justify-between px-6 rounded-2xl border transition-all duration-300 cursor-default shadow-sm hover:shadow-md hover:-translate-y-0.5",
+                  step.intensity
+                )}
+                style={{ width: `${100 - (i * 8)}%` }}
               >
-                <span className="text-sm font-bold uppercase tracking-wider">{step.label}</span>
-                <span className="text-xl font-black">{step.value}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-80">{step.label}</span>
+                <span className="text-lg font-black tabular-nums">{step.value}</span>
               </div>
-              {i < steps.length - 1 && (
-                <div className="hidden md:block">
-                  <ArrowRight className="w-4 h-4 text-brown/20" />
-                </div>
-              )}
             </div>
           ))}
         </div>
         
-        <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-gray-border/40">
-          <div className="p-4 bg-orange/5 rounded-xl border border-orange/10">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-orange/60 mb-1">Retention Leak</p>
-            <p className="text-2xl font-black text-orange">{stats.noFirstOrder}</p>
-            <p className="text-[10px] font-medium text-orange/80">Enrolled but no first order placed</p>
+        <div className="grid grid-cols-2 gap-4 pt-6 border-t border-v-outline/20">
+          <div className="p-4 bg-v-secondary/5 rounded-[20px] border border-v-secondary/20 group hover:shadow-ambient-lite transition-all">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Zap className="h-3 w-3 text-v-secondary" />
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-v-secondary leading-none">Leakage</p>
+            </div>
+            <p className="text-2xl font-bold text-v-on-surface tabular-nums leading-none tracking-tight mb-1">{stats.noFirstOrder}</p>
+            <p className="text-[9px] font-medium text-v-on-surface/30 truncate">Unactivated Enrolled Accounts</p>
           </div>
-          <div className="p-4 bg-teal-base/5 rounded-xl border border-teal-base/10">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-teal-dark/60 mb-1">Growth High</p>
-            <p className="text-2xl font-black text-teal-dark">{stats.expiringMemberships}</p>
-            <p className="text-[10px] font-medium text-teal-dark/80">Memberships in renewal window</p>
+          
+          <div className="p-4 bg-v-primary/5 rounded-[20px] border border-v-primary/20 group hover:shadow-ambient-lite transition-all">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Target className="h-3 w-3 text-v-primary" />
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-v-primary leading-none">Growth</p>
+            </div>
+            <p className="text-2xl font-bold text-v-on-surface tabular-nums leading-none tracking-tight mb-1">{stats.expiringMemberships}</p>
+            <p className="text-[9px] font-medium text-v-on-surface/30 truncate">Memberships in Renewal</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
